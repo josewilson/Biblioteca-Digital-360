@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: biblioteca-digital-360
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/biblioteca}
+    username: ${DB_USER:biblioteca}
+    password: ${DB_PASSWORD}   # sem valor padrão: defina no ambiente (veja .env.example)
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate       # o esquema é só das migrações Flyway
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}          # obrigatório, mínimo 32 caracteres; sem padrão
+    ttl-minutes: ${JWT_TTL_MINUTES:60}
+  admin:                           # cria o 1º SUPER_ADMIN só se não houver nenhum usuário
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}

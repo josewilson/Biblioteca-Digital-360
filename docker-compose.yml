@@ -1,0 +1,14 @@
+# Só o banco, para desenvolvimento local. A aplicação roda pelo IntelliJ ou `mvnw spring-boot:run`.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: biblioteca
+      POSTGRES_USER: ${DB_USER:-biblioteca}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

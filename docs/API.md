@@ -1,0 +1,47 @@
+# API (v1)
+
+Autenticação: `Authorization: Bearer <token>` (veja SECURITY.md). Erros em `ProblemDetail`: 400 validação, 401, 403, 404, 422 regra de negócio.
+Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
+
+| Método e caminho | Quem | O que faz |
+|---|---|---|
+| `POST /auth/login` | público | devolve o token |
+| `POST/GET /users`, `GET /users/{id}` | equipe | cadastra / lista (paginado) / consulta |
+| `DELETE /users/{id}` | administradores | desativa |
+| `POST /authors`, `/publishers`, `/categories` | equipe | cadastra (editora e categoria: nome único) |
+| `GET /authors`, `/publishers`, `/categories` | autenticado | lista por nome |
+| `POST /books` | equipe | cadastra obra **com exemplares** (≥ 1 `CONSULTA` e ≥ 1 `CIRCULANTE`) |
+| `GET /books?title=&page=&size=` | autenticado | busca paginada por título |
+| `GET /books/{id}` | autenticado | obra com autores, categorias e exemplares |
+| `POST /books/{id}/copies` | equipe | acrescenta exemplar |
+| `PATCH /copies/{id}/status` | equipe | `DISPONIVEL`, `PERDIDO` ou `BAIXADO`. Recusa baixa do único exemplar de consulta ativo |
+
+Exemplo de cadastro de obra:
+```json
+{"title":"Dom Casmurro","isbn":"9788535910663","publicationYear":1899,"publisherId":1,"authorIds":[1],"categoryIds":[1],
+ "copies":[{"barcode":"DC-1","kind":"CONSULTA","location":"Estante A"},{"barcode":"DC-2","kind":"CIRCULANTE","condition":"NOVO"}]}
+```
+Pendente: capa por upload (hoje só `coverUrl`), editar/excluir obra, OpenAPI/Swagger.
+
+## Balcão (Fase 5, parte 1)
+| Método e caminho | Quem | O que faz |
+|---|---|---|
+| `POST /loans` `{userId, copyId}` | equipe | empresta (422 se violar alguma regra) |
+| `POST /loans/{id}/return` | equipe | devolve; resposta `{loan, fine}` (`fine` nulo sem multa) |
+| `POST /loans/{id}/renew` | equipe | renova |
+| `GET /loans?userId=&activeOnly=` , `GET /loans/{id}` | equipe | consulta (paginado) |
+| `GET /me/loans?activeOnly=` | qualquer autenticado | só os próprios empréstimos |
+
+## Reservas, multas e pagamentos (Fase 5, parte 2)
+| Método e caminho | Quem | O que faz |
+|---|---|---|
+| `POST /reservations` `{userId, bookId}` | equipe | reserva para um leitor |
+| `POST /reservations/{id}/cancel` | equipe | cancela |
+| `GET /reservations?userId=&status=` | equipe | lista (paginado; `queuePosition` para `NA_FILA`) |
+| `POST /me/reservations` `{bookId}` | autenticado | o leitor reserva para si |
+| `POST /me/reservations/{id}/cancel`, `GET /me/reservations` | autenticado | só as próprias |
+| `GET /fines?userId=&status=` | equipe | lista multas |
+| `POST /fines/{id}/payments` `{method}` | equipe | paga o valor integral (201 + comprovante) |
+| `POST /fines/{id}/waive` `{reason}` | admins e bibliotecário | isenta, com justificativa |
+| `GET /payments/{id}` | equipe | comprovante |
+| `GET /me/fines?status=` | autenticado | as próprias multas |
