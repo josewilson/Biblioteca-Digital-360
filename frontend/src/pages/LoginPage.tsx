@@ -1,0 +1,62 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Navigate, useLocation, useNavigate } from 'react-router'
+import { useAuth } from '../lib/auth'
+import { loginSchema, type LoginForm } from '../schemas'
+import { Button, ErrorAlert, Field, inputClass } from '../components/ui'
+
+export function LoginPage() {
+  const { user, login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [error, setError] = useState<unknown>(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
+
+  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  if (user) return <Navigate to={from} replace />
+
+  async function onSubmit(values: LoginForm) {
+    setError(null)
+    try {
+      await login(values.email, values.password)
+      navigate(from, { replace: true })
+    } catch (e) {
+      setError(e)
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-brand-900 p-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        aria-labelledby="login-titulo"
+        className="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow-xl"
+      >
+        <div>
+          <h1 id="login-titulo" className="text-xl font-bold">
+            Biblioteca Digital 360
+          </h1>
+          <p className="text-sm text-slate-600">Entre com seu e-mail e senha.</p>
+        </div>
+        <ErrorAlert error={error} />
+        <Field label="E-mail" error={errors.email?.message}>
+          {(props) => <input {...props} type="email" autoComplete="username" className={inputClass} {...register('email')} />}
+        </Field>
+        <Field label="Senha" error={errors.password?.message}>
+          {(props) => (
+            <input {...props} type="password" autoComplete="current-password" className={inputClass} {...register('password')} />
+          )}
+        </Field>
+        <Button type="submit" className="w-full" loading={isSubmitting}>
+          Entrar
+        </Button>
+      </form>
+    </main>
+  )
+}

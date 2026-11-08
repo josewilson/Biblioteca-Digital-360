@@ -9,14 +9,14 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 5 e o backend da Fase 6 (painel, relatórios com CSV, notificações por canal configurável). Esquema em V1-V6.
-- **Não feito:** frontend React (Fase 6b), OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, revisão de desempenho e testes E2E (Fase 7).
+- **Feito:** Fases 1 a 5, backend da Fase 6 (painel, relatórios, notificações) e frontend React (login, painel, acervo, balcão, reservas, multas, relatórios, usuários, área do leitor). Esquema em V1-V6.
+- **Não feito:** OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, testes E2E (Playwright) e auditoria de acessibilidade com ferramenta (Fase 7); edição/exclusão de obra; upload de capa.
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `pom.xml` mandam)
 Java 21 · Spring Boot 3.5.16 (Web, Validation, Data JPA, Actuator, Security + OAuth2 resource server para JWT) · PostgreSQL 16 · Flyway · JUnit 5 · Testcontainers · Maven Wrapper.
-Planejado, ainda **não** no projeto: springdoc OpenAPI, Mockito explícito (já vem no starter de teste),
-React + TypeScript + Vite (Fase 6). Dependência nova só com finalidade concreta, justificada ao usuário.
+Frontend (`frontend/`): React 19, TypeScript 7 (strict), Vite 8, React Router 8, TanStack Query 5, React Hook Form 7 + Zod 4, Tailwind CSS 4, Lucide, Recharts 3, Vitest 5 + Testing Library. Versões exatas em `frontend/package.json`.
+Planejado, ainda **não** no projeto: springdoc OpenAPI, Playwright, Mockito explícito (já vem no starter de teste). Dependência nova só com finalidade concreta, justificada ao usuário.
 
 ## 4. Estrutura
 ```
@@ -28,6 +28,7 @@ src/main/java/br/com/biblioteca/
   <módulo>/                    futuro: acervo, usuario, emprestimo, reserva, multa, ...
 src/main/resources/db/migration/   Vnn__descricao.sql
 docs/                              documentação complementar
+frontend/                          aplicação React (src/lib = API/auth/formatação, src/components, src/pages, src/schemas.ts)
 ```
 Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras) → `domain` (entidades, regras puras) → `infra` (repository, adapters).
 
@@ -69,7 +70,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - `ddl-auto: validate`. Constraints no banco quando possível (unicidade, FK composta, CHECK).
 
 ## 12. Testes
-- Rodar: `./mvnw test` (Windows: `mvnw.cmd test`). Só diga que passou se rodou e viu `BUILD SUCCESS`.
+- Backend: `./mvnw test` (Windows: `mvnw.cmd test`). Frontend: `cd frontend && npm test` e `npm run build`. Só diga que passou se rodou e viu o resultado.
 - Regra de negócio: teste unitário. Esquema/SQL: `EsquemaPostgresTest` (Testcontainers; **pulado sem Docker**, diga isso no relatório).
 
 ## 13. Commits e manutenção
@@ -86,3 +87,15 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - Multa: por dia de atraso, valor **configurável** (`fine_rates.daily_rate`), em reais. Padrões iniciais: aluno 1,00, professor 0,50, visitante 2,00.
 - Uma multa por empréstimo e um pagamento por multa (sem cobrança duplicada).
 - Com multa, o leitor é avisado. `EmailSmtp` (legado) simula envio e demora 2 s.
+
+## 15. Frontend (`frontend/`)
+- **Autorização é do servidor.** A interface esconde menus e botões por perfil só por conveniência (`RequireRole`, `useAuth`); nunca trate isso como proteção. O JWT é lido apenas para id, perfis e validade.
+- **Token** em `sessionStorage` (`lib/api.ts`). Proibido `dangerouslySetInnerHTML`, `innerHTML`, `eval` ou qualquer HTML montado com texto da API: o React já escapa o texto, e é isso que mantém o risco de XSS baixo.
+- **API:** toda chamada passa por `api()` (`lib/api.ts`), que manda o token, traduz o `ProblemDetail` em `ApiError` e derruba a sessão num 401. Tipos em `lib/types.ts` espelham os DTOs de `docs/API.md`: mudou o DTO, mude o tipo.
+- **Dados do servidor** com TanStack Query (nada de `useEffect` + `fetch`); invalide as chaves afetadas após cada mutação.
+- **Formulários** com React Hook Form + Zod (`schemas.ts`). A validação do navegador é só para dar resposta rápida: o servidor valida de novo e sua mensagem é mostrada (`ErrorAlert`).
+- **Dinheiro** chega do servidor como número em reais e só é formatado para exibição (`formatMoney`). Nenhuma conta com dinheiro no navegador.
+- **Acessibilidade (mínimo obrigatório):** todo campo com `<Field>` (rótulo ligado por id, erro anunciado), diálogos nativos `<dialog>`, estado sempre com texto além da cor, foco visível, tabelas com `caption` e `scope`, gráficos com `aria-label` descrevendo os números, link "Pular para o conteúdo".
+- **Operação crítica** (devolver, baixar exemplar, cancelar reserva, desativar usuário, isentar multa) sempre com `ConfirmDialog`/diálogo.
+- **Em desenvolvimento** o Vite repassa `/api` para `localhost:8080` (sem CORS). Não adicione `@CrossOrigin` no backend para isso.
+- Sem dependência de UI nova sem necessidade: os componentes de `components/ui.tsx` são próprios (Tailwind) em vez de shadcn/ui, que exige gerar código no projeto.
