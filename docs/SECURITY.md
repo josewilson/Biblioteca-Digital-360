@@ -17,3 +17,9 @@ Consulta ao acervo (`GET`): qualquer autenticado. Escrita em acervo e `/users`: 
 - Reservas, multas e pagamentos de outros leitores: só equipe. O leitor usa `/me/**` (as próprias reservas, multas, empréstimos); cancelar reserva alheia responde 404.
 - Isenção de multa (`/fines/*/waive`): só SUPER_ADMIN, ADMIN_INSTITUTION e LIBRARIAN; auxiliar recebe pagamento mas não isenta. Regra por URL, antes da validação do corpo.
 - Auditoria nova: `LOAN_*`, `RESERVATION_*`, `FINE_PAID`, `FINE_WAIVED`, `COPY_*`.
+
+## Painel, relatórios e notificações (Fase 6)
+- `/dashboard` e `/reports/**`: só a equipe (regra por URL + `@PreAuthorize`). O relatório `users` traz só totais por perfil; `overdue` inclui e-mail do leitor para contato.
+- SQL dos relatórios é fixo; o usuário escolhe só o relatório (lista fechada) e as datas. Slug desconhecido: 404.
+- **CSV:** textos que começam com `=`, `+`, `-` ou `@` recebem um apóstrofo na frente (evita que o Excel/Sheets execute como fórmula); números não são alterados.
+- O log de notificações mascara o e-mail (`a***@dominio`). O SMTP usa credenciais só por variável de ambiente.

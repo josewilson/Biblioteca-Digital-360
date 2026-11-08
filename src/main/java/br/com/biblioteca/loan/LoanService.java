@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
@@ -32,6 +33,7 @@ import br.com.biblioteca.user.UserRepository;
 public class LoanService {
 
     private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final LoanRepository loans;
     private final LoanRenewalRepository renewals;
@@ -92,6 +94,8 @@ public class LoanService {
         Instant due = plusDays(now, policy.getLoanDays());
         Loan loan = loans.save(new Loan(userId, copy, callerId, now, due));
         audit.record(callerId, "LOAN_CREATED", "loan", loan.getId(), "leitor=" + userId + " exemplar=" + copy.getId(), ip);
+        notifications.record(userId, "LOAN_CONFIRMED", "Empréstimo de \"" + copy.getBook().getTitle()
+                + "\" confirmado. Devolva até " + DATE.format(due.atZone(clock.getZone())) + ".");
         return LoanResponse.from(loan);
     }
 
