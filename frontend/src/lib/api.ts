@@ -57,6 +57,7 @@ const FALLBACK_MESSAGES: Record<number, string> = {
   403: 'Você não tem permissão para esta ação.',
   404: 'Não encontrado.',
   422: 'Operação não permitida.',
+  429: 'Muitas tentativas. Aguarde alguns minutos.',
 }
 
 async function toApiError(res: Response): Promise<ApiError> {

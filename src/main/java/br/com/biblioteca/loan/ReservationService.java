@@ -2,7 +2,9 @@ package br.com.biblioteca.loan;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -187,7 +189,21 @@ public class ReservationService {
         } else {
             page = status == null ? reservations.findAll(pageable) : reservations.findByStatus(status, pageable);
         }
-        return page.map(this::toResponse);   // ponytail: uma consulta de posição por item da página (páginas pequenas)
+        Map<Long, Integer> positions = queuePositions(page.getContent());
+        return page.map(r -> ReservationResponse.from(r, positions.get(r.getId())));
+    }
+
+    /** Posição na fila (1 = próxima) de cada reserva NA_FILA da página, com uma única consulta. */
+    private Map<Long, Integer> queuePositions(List<Reservation> page) {
+        List<Long> waiting = page.stream().filter(r -> r.getStatus() == ReservationStatus.NA_FILA).map(Reservation::getId).toList();
+        if (waiting.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Integer> positions = new HashMap<>();
+        for (Object[] row : reservations.countAheadFor(waiting)) {
+            positions.put((Long) row[0], ((Number) row[1]).intValue() + 1);
+        }
+        return positions;
     }
 
     private ReservationResponse toResponse(Reservation r) {

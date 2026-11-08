@@ -21,11 +21,11 @@ type Handler = (init: RequestInit) => unknown | Response
  * Rota não prevista responde 404, o que faz o teste falhar de forma visível.
  */
 export function mockFetch(handlers: Record<string, Handler>) {
-  const calls: { key: string; init: RequestInit }[] = []
+  const calls: { key: string; init: RequestInit; search: string }[] = []
   const fn = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const url = new URL(String(input), 'http://localhost')
     const key = `${init.method ?? 'GET'} ${url.pathname}`
-    calls.push({ key, init })
+    calls.push({ key, init, search: url.search })
     const handler = handlers[key]
     if (!handler) {
       return new Response(JSON.stringify({ detail: `sem mock para ${key}` }), { status: 404 })

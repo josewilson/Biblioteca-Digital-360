@@ -72,10 +72,11 @@ export function Field({ label, error, hint, children }: FieldProps) {
 
 export function Card({ title, actions, children }: { title?: string; actions?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    // Painel sem sombra: a borda já separa. Só agrupa onde há formulário, tabela ou gráfico.
+    <section className="rounded border border-slate-200 bg-white">
       {(title || actions) && (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-          {title && <h2 className="text-base font-semibold">{title}</h2>}
+          {title && <h2 className="text-xl font-semibold">{title}</h2>}
           {actions}
         </header>
       )}
@@ -88,8 +89,8 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-slate-600">{subtitle}</p>}
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        {subtitle && <p className="mt-1 max-w-prose text-slate-600">{subtitle}</p>}
       </div>
       {actions}
     </div>
@@ -98,16 +99,17 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 
 type Tone = 'neutral' | 'green' | 'amber' | 'red' | 'blue'
 
+// Rótulos de estado: caixa discreta com borda (não pílula), sempre com texto.
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-slate-100 text-slate-800',
-  green: 'bg-green-100 text-green-900',
-  amber: 'bg-amber-100 text-amber-900',
-  red: 'bg-red-100 text-red-900',
-  blue: 'bg-blue-100 text-blue-900',
+  neutral: 'border-slate-300 bg-slate-100 text-slate-800',
+  green: 'border-brand-600/40 bg-brand-50 text-brand-700',
+  amber: 'border-due/40 bg-due-bg text-due',
+  red: 'border-stamp/50 bg-red-50 text-stamp',
+  blue: 'border-[#1d4e89]/40 bg-[#e3edf8] text-[#1d4e89]',
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>
+  return <span className={`inline-block rounded-sm border px-2 py-0.5 text-sm font-semibold ${TONES[tone]}`}>{children}</span>
 }
 
 const STATUS_TONES: Record<string, Tone> = {
@@ -192,21 +194,23 @@ export function Loading({ label = 'Carregando…' }: { label?: string }) {
   )
 }
 
+/** Vazio é um convite: diga o que fazer em seguida. */
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-sm text-slate-500">{children}</p>
+  return <p className="py-5 text-center text-slate-600">{children}</p>
 }
 
 // ---------- tabela e paginação ----------
 
 export function Table({ caption, head, children }: { caption: string; head: string[]; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
+    // No celular a tabela rola na horizontal: o quadro precisa ser alcançável por teclado (WCAG 2.1.1) e ter nome.
+    <div className="overflow-x-auto" role="region" aria-label={caption} tabIndex={0}>
+      <table className="min-w-full text-left">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-slate-200 text-xs uppercase text-slate-600">
+        <thead className="border-b-2 border-slate-300 text-slate-700">
           <tr>
             {head.map((h) => (
-              <th key={h} scope="col" className="px-3 py-2 font-semibold">
+              <th key={h} scope="col" className="px-3 py-2 font-bold">
                 {h}
               </th>
             ))}
@@ -218,7 +222,10 @@ export function Table({ caption, head, children }: { caption: string; head: stri
   )
 }
 
-export const cellClass = 'px-3 py-2 align-middle'
+export const cellClass = 'px-3 py-2.5 align-middle'
+
+/** Título de uma obra: sempre em serifa, para se distinguir do resto da interface. */
+export const workTitleClass = 'font-serif'
 
 export function Pagination({
   page,

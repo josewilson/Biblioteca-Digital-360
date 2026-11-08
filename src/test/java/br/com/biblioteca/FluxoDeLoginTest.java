@@ -70,6 +70,33 @@ class FluxoDeLoginTest {
     }
 
     @Test
+    void cincoSenhasErradasBloqueiamOLoginDaqueleEmailMesmoComASenhaCerta() throws Exception {
+        String admin = login("admin@teste.com", "senha-admin-123");
+        for (String email : new String[] {"alvo@teste.com", "outro@teste.com"}) {
+            mvc.perform(post("/api/v1/users").header("Authorization", "Bearer " + admin)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"fullName\":\"Leitor\",\"email\":\"" + email + "\",\"password\":\"senha-certa-1\",\"roles\":[\"STUDENT\"]}"))
+                    .andExpect(status().isCreated());
+        }
+        String errada = "{\"email\":\"alvo@teste.com\",\"password\":\"errada\"}";
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(errada))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // 6ª tentativa, agora com a senha CERTA: bloqueada (429), sem token
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"alvo@teste.com\",\"password\":\"senha-certa-1\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.accessToken").doesNotExist());
+
+        // outro e-mail não é afetado
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"outro@teste.com\",\"password\":\"senha-certa-1\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void senhaErradaRecebe401() throws Exception {
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"admin@teste.com\",\"password\":\"errada\"}"))

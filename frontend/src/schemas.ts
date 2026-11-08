@@ -29,7 +29,7 @@ export const bookSchema = z
     publicationYear: z.string().regex(/^(\d{4})?$/, 'Use 4 dígitos (ex.: 1899).'),
     language: z.string().max(30, 'No máximo 30 caracteres.'),
     description: z.string(),
-    coverUrl: z.string().max(500, 'No máximo 500 caracteres.'),
+    coverUrl: z.string().max(500, 'No máximo 500 caracteres.').regex(/^(https?:\/\/\S+)?$/, 'Use um endereço http:// ou https://'),
     publisherId: z.string(),
     authorIds: z.array(z.string()),
     categoryIds: z.array(z.string()),

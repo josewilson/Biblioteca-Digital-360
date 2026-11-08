@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,6 +37,7 @@ public class User {
     private Instant updatedAt = Instant.now();
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @BatchSize(size = 100)   // lista de 200 usuários: 2 consultas de perfis em vez de 200
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))

@@ -29,11 +29,31 @@ describe('painel', () => {
 
     // o painel é carregado sob demanda (gráficos): a primeira importação é mais lenta que o padrão de 1 s
     expect(await screen.findByText('Obras cadastradas', {}, { timeout: 10_000 })).toBeInTheDocument()
-    const overdue = screen.getByText('Empréstimos atrasados').nextElementSibling
-    expect(overdue).toHaveTextContent('2')
-    expect(overdue).toHaveClass('text-red-700')
-    expect(screen.getByText('Valor em aberto').nextElementSibling).toHaveTextContent('R$ 3,00')
+    // o que pede ação abre o painel, em destaque, com atalho para a tela que resolve
+    const overdue = screen.getByText(/empréstimos atrasados/).closest('[data-attention]')!
+    expect(overdue).toHaveAttribute('data-attention', 'true')
+    expect(overdue).toHaveTextContent('2 empréstimos atrasados')
+    expect(within(overdue as HTMLElement).getByRole('link', { name: 'Ver empréstimos em andamento' })).toHaveAttribute('href', '/balcao')
+    const fines = screen.getByText(/multa em aberto/).closest('[data-attention]')!
+    expect(fines).toHaveTextContent('1 multa em aberto')
+    expect(fines).toHaveTextContent('Somam R$ 3,00')
+    expect(screen.getByText('Valor de multas em aberto').nextElementSibling).toHaveTextContent('R$ 3,00')
     expect(screen.getByRole('img', { name: /Obras mais emprestadas: Dom Casmurro, 5/ })).toBeInTheDocument()
+  })
+
+  it('sem pendências, o painel fica quieto: sem destaque e sem atalhos', async () => {
+    mockFetch({
+      'GET /api/v1/dashboard': () => ({
+        totalBooks: 1, totalCopies: 2, activeUsers: 3, activeLoans: 4, overdueLoans: 0, pendingReservations: 0,
+        openFinesCount: 0, openFinesAmount: 0, topBooks: [], topCategories: [], movements: [],
+      }),
+    })
+    renderApp('/painel', ['LIBRARIAN'])
+
+    expect(await screen.findByText('Todos os livros emprestados estão no prazo.', {}, { timeout: 10_000 })).toBeInTheDocument()
+    expect(screen.getByText('Nenhuma cobrança pendente.')).toBeInTheDocument()
+    expect(document.querySelectorAll('[data-attention="true"]')).toHaveLength(0)
+    expect(screen.queryByRole('link', { name: 'Receber ou isentar multas' })).not.toBeInTheDocument()
   })
 
   it('mostra o erro do servidor em vez de uma tela vazia', async () => {
@@ -110,7 +130,7 @@ describe('balcão', () => {
   }
 
   async function pickReaderAndCopy(user: ReturnType<typeof userEvent.setup>) {
-    await screen.findByRole('option', { name: /Ana Souza/ })
+    await screen.findAllByRole('option', { name: /Ana Souza/ })   // uma lista no formulário e outra no filtro
     await user.selectOptions(screen.getByLabelText('Leitor'), '7')
     await user.type(screen.getByLabelText('Buscar obra pelo título'), 'dom')
     await user.click(screen.getByRole('button', { name: 'Buscar' }))
@@ -147,6 +167,20 @@ describe('balcão', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Limite de 3 empréstimos simultâneos atingido.')
   })
 
+  it('filtra os empréstimos em andamento por leitor (para achar o que devolver entre muitos)', async () => {
+    const { calls } = openCounter()
+    renderApp('/balcao', ['LIBRARIAN'])
+    const user = userEvent.setup()
+
+    await screen.findAllByRole('option', { name: /Ana Souza/ })
+    await user.selectOptions(screen.getByLabelText('Filtrar por leitor'), '7')
+
+    await waitFor(() =>
+      expect(calls.some((c) => c.key === 'GET /api/v1/loans' && c.search.includes('userId=7') && c.search.includes('activeOnly=true'))).toBe(true),
+    )
+    expect(await screen.findByText('Este leitor não tem empréstimos em andamento.')).toBeInTheDocument()
+  })
+
   it('devolução pede confirmação e avisa da multa gerada', async () => {
     const loan = { id: 90, userId: 7, copyId: 12, barcode: 'E-1', bookTitle: 'Dom Casmurro', loanedAt: '2026-01-01T15:00:00Z', dueAt: '2026-01-15T15:00:00Z', returnedAt: null }
     const { calls } = openCounter({
@@ -160,7 +194,7 @@ describe('balcão', () => {
     const user = userEvent.setup()
 
     const row = (await screen.findByText('E-1')).closest('tr')!
-    expect(within(row).getByText('Atrasado')).toBeInTheDocument()
+    expect(within(row).getByText(/Atrasado/)).toBeInTheDocument()
     expect(within(row).getByRole('button', { name: 'Renovar' })).toBeDisabled()   // atrasado não renova
     await user.click(within(row).getByRole('button', { name: 'Devolver' }))
 

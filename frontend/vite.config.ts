@@ -16,5 +16,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Os testes de ponta a ponta (Playwright) rodam em outro comando: npm run e2e
+    exclude: ['e2e/**', 'node_modules/**'],
   },
 })

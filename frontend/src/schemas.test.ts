@@ -82,3 +82,19 @@ describe('userSchema e waiveSchema', () => {
     expect(waiveSchema.safeParse({ reason: 'Doença comprovada' }).success).toBe(true)
   })
 })
+
+describe('bookSchema: endereço da capa', () => {
+  const book = (coverUrl: string) => bookSchema.safeParse({ ...baseBook([copy('A1', 'CONSULTA'), copy('A2', 'CIRCULANTE')]), coverUrl })
+
+  it('aceita http, https ou vazio', () => {
+    expect(book('https://exemplo.org/capa.png').success).toBe(true)
+    expect(book('http://exemplo.org/capa.png').success).toBe(true)
+    expect(book('').success).toBe(true)
+  })
+
+  it('recusa esquemas perigosos e endereços com espaço', () => {
+    for (const url of ['javascript:alert(1)', 'data:text/html;base64,AAAA', 'ftp://x.org/a.png', 'https://x.org/a b.png']) {
+      expect(book(url).success, url).toBe(false)
+    }
+  })
+})
