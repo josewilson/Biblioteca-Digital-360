@@ -1,0 +1,7 @@
+# Fim de linha: scripts que rodam em Linux (containers, CI) precisam de LF mesmo se clonados no Windows.
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
+*.cmd text eol=crlf

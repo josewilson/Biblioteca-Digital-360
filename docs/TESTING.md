@@ -1,6 +1,6 @@
 # Testes
 
-Contagens da última execução completa: **backend 119** (`mvnw test`) e **frontend 44** (`npm test`), todos passando.
+Contagens da última execução completa (todos passando): **backend 139** (`mvnw test`), **frontend 55** (`npm test`) e **26 de ponta a ponta** em navegador real (`npm run e2e`).
 
 ## Backend (`./mvnw test`, Windows: `mvnw.cmd test`)
 | Tipo | Onde | O que prova |
@@ -26,8 +26,27 @@ Vitest + Testing Library em jsdom, com `fetch` simulado (`src/test/utils.tsx`).
 ## Verificado à mão, uma vez (não é teste automatizado)
 Backend real + PostgreSQL descartável + Vite: login, cadastro de obra, empréstimo, devolução, painel, relatório e CSV **pelo proxy do Vite**, conferindo os campos de cada resposta com `frontend/src/lib/types.ts`. Tudo conferiu.
 
+## Ponta a ponta (navegador real)
+Playwright (Chromium) contra a **pilha completa em Docker** (nginx + backend + PostgreSQL), numa instância isolada que não toca no seu banco. Dentro da pasta `frontend`:
+```
+npx playwright install chromium   # só na primeira vez
+npm run e2e:up                    # sobe a pilha de teste (portas 3100 e 55433, valores fictícios de e2e/e2e.env)
+npm run e2e
+npm run e2e:down                  # derruba e apaga os dados de teste
+```
+Dois projetos: **desktop** (1280×800) e **mobile** (Pixel 5). Um worker só, porque o banco é compartilhado.
+- `auth.spec.ts`: senha errada, campos vazios, rota protegida volta para o destino, sair encerra a sessão, token só em `sessionStorage`, **bloqueio após 5 senhas erradas**.
+- `staff-flow.spec.ts`: a equipe cadastra autor, obra (a regra da consulta é recusada na tela e depois aceita), leitor, empresta (exemplar de consulta nem aparece) e devolve, tudo pela interface.
+- `reader.spec.ts`: leitor sem menu da equipe, "Acesso negado" ao digitar a rota, reserva e cancelamento.
+- `security.spec.ts`: CSP e cabeçalhos reais do nginx e da API, sem erro de CSP/console ao navegar por todas as telas, **XSS** (HTML vindo do servidor aparece como texto e não executa).
+- `a11y.spec.ts`: **axe-core** (WCAG 2.0/2.1 A e AA) em todas as telas e diálogos, em desktop e celular, com dados reais; salva uma imagem de cada tela em `e2e-shots/`.
+- `mobile.spec.ts`: menu recolhível, nenhuma tela rola na horizontal, formulário de obra cabe na tela.
+
+Os testes **não dependem de banco vazio** (verificado: rodadas seguidas na mesma pilha passam). O E2E já pegou defeitos reais que os outros testes não pegavam: saúde do backend derrubada pelo servidor de e-mail, healthcheck do nginx em IPv6, tabela rolável inacessível por teclado e a falta de um filtro por leitor no balcão.
+
 ## O que NÃO está coberto
-- **Aparência e uso real no navegador:** nenhum teste abre um navegador. Layout responsivo, gráficos desenhados e foco por teclado **não foram vistos**. (Playwright, Fase 7.)
-- **Acessibilidade por ferramenta** (axe/Lighthouse): não rodou. Só as práticas listadas no AGENTS.md foram seguidas.
-- **E-mail SMTP real:** só testado com remetente simulado.
-- **Desempenho e carga:** nenhum teste.
+- **Só Chromium.** Firefox e Safari não foram testados.
+- **O axe-core encontra só uma parte dos problemas de acessibilidade** (a própria ferramenta avisa que automação cobre uma fração). **Teste manual com leitor de tela (NVDA, VoiceOver) não foi feito.**
+- A aparência foi conferida por mim em capturas; não houve revisão de um designer nem teste com usuários.
+- **GitHub Actions (`.github/workflows/ci.yml`) foi escrito mas não executado**: não consegui rodá-lo daqui. Os mesmos comandos rodaram localmente, mas o CI real pode revelar diferenças de ambiente.
+- E-mail SMTP real, carga e desempenho no navegador (Lighthouse): não testados.

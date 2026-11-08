@@ -4,9 +4,9 @@ import { api } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import type { Book, Loan, Page, ReturnResult } from '../lib/types'
 import { BookPicker, UserSelect, useUserNames } from '../components/pickers'
+import { DueStamp } from '../components/DueStamp'
 import {
   Alert,
-  Badge,
   Button,
   Card,
   ConfirmDialog,
@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Table,
   cellClass,
+  workTitleClass,
 } from '../components/ui'
 
 function NewLoan() {
@@ -90,12 +91,13 @@ function ActiveLoans() {
   const queryClient = useQueryClient()
   const userName = useUserNames()
   const [page, setPage] = useState(0)
+  const [filterUser, setFilterUser] = useState<number | null>(null)
   const [returning, setReturning] = useState<Loan | null>(null)
   const [result, setResult] = useState<ReturnResult | null>(null)
 
   const loans = useQuery({
-    queryKey: ['loans', 'active', page],
-    queryFn: () => api<Page<Loan>>('/loans', { params: { activeOnly: true, page, size: 10, sort: 'dueAt,asc' } }),
+    queryKey: ['loans', 'active', filterUser, page],
+    queryFn: () => api<Page<Loan>>('/loans', { params: { activeOnly: true, userId: filterUser, page, size: 10, sort: 'dueAt,asc' } }),
   })
 
   const refresh = () => {
@@ -119,6 +121,17 @@ function ActiveLoans() {
 
   return (
     <Card title="Empréstimos em andamento">
+      <div className="mb-4 max-w-md">
+        <UserSelect
+          label="Filtrar por leitor"
+          emptyLabel="Todos os leitores"
+          value={filterUser}
+          onChange={(id) => {
+            setPage(0)
+            setFilterUser(id)
+          }}
+        />
+      </div>
       {result && (
         <div className="mb-3">
           {result.fine ? (
@@ -136,19 +149,21 @@ function ActiveLoans() {
       <ErrorAlert error={renew.error} />
       {loans.isLoading && <Loading />}
       <ErrorAlert error={loans.error} />
-      {loans.data && loans.data.content.length === 0 && <Empty>Nenhum empréstimo em andamento.</Empty>}
+      {loans.data && loans.data.content.length === 0 && <Empty>
+          {filterUser ? 'Este leitor não tem empréstimos em andamento.' : 'Nenhum empréstimo em andamento. Registre o primeiro em "Novo empréstimo", acima.'}
+        </Empty>}
       {loans.data && loans.data.content.length > 0 && (
         <>
-          <Table caption="Empréstimos em andamento" head={['Obra', 'Exemplar', 'Leitor', 'Vencimento', 'Ações']}>
+          <Table caption="Empréstimos em andamento" head={['Obra', 'Exemplar', 'Leitor', 'Prazo', 'Ações']}>
             {loans.data.content.map((l) => {
               const overdue = new Date(l.dueAt).getTime() < Date.now()
               return (
                 <tr key={l.id}>
-                  <td className={cellClass}>{l.bookTitle}</td>
+                  <td className={`${cellClass} ${workTitleClass}`}>{l.bookTitle}</td>
                   <td className={cellClass}>{l.barcode}</td>
                   <td className={cellClass}>{userName(l.userId)}</td>
                   <td className={cellClass}>
-                    {formatDateTime(l.dueAt)} {overdue && <Badge tone="red">Atrasado</Badge>}
+                    <DueStamp dueAt={l.dueAt} />
                   </td>
                   <td className={`${cellClass} space-x-2 whitespace-nowrap`}>
                     <Button variant="secondary" onClick={() => { setResult(null); setReturning(l) }}>

@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import type { Fine, Loan, Page, Reservation } from '../lib/types'
+import { DueStamp } from '../components/DueStamp'
 import {
-  Badge,
   Button,
   Card,
   ConfirmDialog,
@@ -15,6 +15,7 @@ import {
   StatusBadge,
   Table,
   cellClass,
+  workTitleClass,
 } from '../components/ui'
 
 export function MyAreaPage() {
@@ -49,28 +50,18 @@ export function MyAreaPage() {
         <Card title="Meus empréstimos">
           {loans.isLoading && <Loading />}
           <ErrorAlert error={loans.error} />
-          {loans.data && loans.data.content.length === 0 && <Empty>Você ainda não pegou livros emprestados.</Empty>}
+          {loans.data && loans.data.content.length === 0 && <Empty>Você ainda não pegou livros emprestados. Procure uma obra no Acervo e peça no balcão.</Empty>}
           {loans.data && loans.data.content.length > 0 && (
-            <Table caption="Meus empréstimos" head={['Obra', 'Emprestado em', 'Devolver até', 'Situação']}>
-              {loans.data.content.map((l) => {
-                const overdue = !l.returnedAt && new Date(l.dueAt).getTime() < Date.now()
-                return (
-                  <tr key={l.id}>
-                    <td className={cellClass}>{l.bookTitle}</td>
-                    <td className={cellClass}>{formatDateTime(l.loanedAt)}</td>
-                    <td className={cellClass}>{formatDateTime(l.dueAt)}</td>
-                    <td className={cellClass}>
-                      {l.returnedAt ? (
-                        <Badge tone="green">Devolvido</Badge>
-                      ) : overdue ? (
-                        <Badge tone="red">Atrasado</Badge>
-                      ) : (
-                        <Badge tone="amber">Em andamento</Badge>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
+            <Table caption="Meus empréstimos" head={['Obra', 'Emprestado em', 'Prazo']}>
+              {loans.data.content.map((l) => (
+                <tr key={l.id}>
+                  <td className={`${cellClass} ${workTitleClass}`}>{l.bookTitle}</td>
+                  <td className={cellClass}>{formatDateTime(l.loanedAt)}</td>
+                  <td className={cellClass}>
+                    <DueStamp dueAt={l.dueAt} returnedAt={l.returnedAt} />
+                  </td>
+                </tr>
+              ))}
             </Table>
           )}
         </Card>
@@ -83,7 +74,7 @@ export function MyAreaPage() {
             <Table caption="Minhas reservas" head={['Obra', 'Situação', 'Retirar até', 'Ações']}>
               {reservations.data.content.map((r) => (
                 <tr key={r.id}>
-                  <td className={cellClass}>{r.bookTitle}</td>
+                  <td className={`${cellClass} ${workTitleClass}`}>{r.bookTitle}</td>
                   <td className={cellClass}>
                     <StatusBadge value={r.status} />
                     {r.queuePosition && <span className="ml-2 text-xs text-slate-600">{r.queuePosition}º da fila</span>}

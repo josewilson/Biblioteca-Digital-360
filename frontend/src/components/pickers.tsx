@@ -17,11 +17,21 @@ export function useUserNames(): (id: number) => string {
   return (id) => names.get(id) ?? `Leitor #${id}`
 }
 
-export function UserSelect({ value, onChange }: { value: number | null; onChange: (id: number | null) => void }) {
+export function UserSelect({
+  value,
+  onChange,
+  label = 'Leitor',
+  emptyLabel = 'Escolha o leitor',
+}: {
+  value: number | null
+  onChange: (id: number | null) => void
+  label?: string
+  emptyLabel?: string
+}) {
   const { data, isLoading, error } = useQuery(usersQuery())
   return (
     <div className="space-y-2">
-      <Field label="Leitor">
+      <Field label={label}>
         {(props) => (
           <select
             {...props}
@@ -30,7 +40,7 @@ export function UserSelect({ value, onChange }: { value: number | null; onChange
             disabled={isLoading}
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
           >
-            <option value="">{isLoading ? 'Carregando…' : 'Escolha o leitor'}</option>
+            <option value="">{isLoading ? 'Carregando…' : emptyLabel}</option>
             {(data?.content ?? [])
               .filter((u) => u.active)
               .map((u) => (
@@ -63,15 +73,29 @@ export function BookPicker({ onPick }: { onPick: (book: Book) => void }) {
 
   return (
     <div className="space-y-2">
-      <form onSubmit={search} className="flex items-end gap-2">
-        <div className="flex-1">
-          <Field label="Buscar obra pelo título" hint="Digite pelo menos 2 letras.">
-            {(props) => <input {...props} className={inputClass} value={text} onChange={(e) => setText(e.target.value)} />}
-          </Field>
+      <form onSubmit={search} className="space-y-1">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Field label="Buscar obra pelo título">
+              {(props) => (
+                <input
+                  {...props}
+                  aria-describedby="dica-busca-obra"
+                  className={inputClass}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              )}
+            </Field>
+          </div>
+          <Button type="submit" variant="secondary" disabled={text.trim().length < 2}>
+            Buscar
+          </Button>
         </div>
-        <Button type="submit" variant="secondary" disabled={text.trim().length < 2}>
-          Buscar
-        </Button>
+        {/* A dica fica abaixo da linha do campo e do botão, para os dois ficarem alinhados. */}
+        <p id="dica-busca-obra" className="text-sm text-slate-600">
+          Digite pelo menos 2 letras.
+        </p>
       </form>
       <ErrorAlert error={error} />
       {isFetching && <Loading />}

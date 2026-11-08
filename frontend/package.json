@@ -9,9 +9,14 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:up": "docker compose --env-file e2e/e2e.env -p bd360-e2e -f ../docker-compose.yml --profile full up -d --build --wait",
+    "e2e:down": "docker compose --env-file e2e/e2e.env -p bd360-e2e -f ../docker-compose.yml --profile full down -v",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "@fontsource-variable/literata": "^5.3.0",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
     "@hookform/resolvers": "^7.0.3",
     "@tanstack/react-query": "^5.107.1",
     "lucide-react": "^1.70.0",
@@ -23,10 +28,13 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",

@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Table,
   cellClass,
+  workTitleClass,
   inputClass,
 } from '../components/ui'
 
@@ -122,7 +123,7 @@ export function ReservationsPage() {
               <Table caption="Reservas" head={['Obra', 'Leitor', 'Situação', 'Retirar até', 'Ações']}>
                 {list.data.content.map((r) => (
                   <tr key={r.id}>
-                    <td className={cellClass}>{r.bookTitle}</td>
+                    <td className={`${cellClass} ${workTitleClass}`}>{r.bookTitle}</td>
                     <td className={cellClass}>{userName(r.userId)}</td>
                     <td className={cellClass}>
                       <StatusBadge value={r.status} />

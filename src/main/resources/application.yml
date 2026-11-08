@@ -17,6 +17,11 @@ management:
     web:
       exposure:
         include: health,info
+  health:
+    mail:
+      # Queda do servidor de e-mail nao pode marcar o sistema todo como fora do ar (o Docker reiniciaria o container).
+      # Os avisos tem tentativas proprias (tabela notifications); a saude considera so o que e essencial (banco).
+      enabled: false
 
 app:
   jwt:

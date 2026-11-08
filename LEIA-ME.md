@@ -18,7 +18,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
 - Código **legado** da aula (Cap 04): `Livro`, `Leitor`, `Biblioteca`, `CalculadoraDeMulta`, com 11 testes. Será substituído aos poucos.
 
-**Ainda não existe:** OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, testes de ponta a ponta no navegador (Playwright), edição/exclusão de obra e envio de imagem de capa.
+**Ainda não existe:** OpenAPI/Swagger, recuperação de senha, HTTPS embutido (precisa de proxy com certificado), edição/exclusão de obra e envio de imagem de capa.
 
 ## Tecnologias
 Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
@@ -48,6 +48,13 @@ Pelo terminal (Windows PowerShell): `$env:DB_PASSWORD="sua-senha"; $env:JWT_SECR
 
 Programa de exemplo do legado: `App.java`.
 
+## Aplicação completa em Docker
+Banco, backend e site juntos, com um só comando (detalhes, HTTPS e backup em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)):
+```
+docker compose --profile full up -d --build
+```
+Depois abra `http://localhost:3000`. É preciso ter `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_EMAIL` e `ADMIN_PASSWORD` no `.env` (veja acima). Sem `--profile full`, o compose sobe só o banco, para desenvolvimento.
+
 ## Interface web (frontend)
 Em outro terminal, com o backend rodando na porta 8080:
 ```
@@ -59,7 +66,8 @@ O Vite repassa `/api` ao backend (sem CORS). Entre com o administrador criado po
 
 ## Testes
 Backend: `mvnw.cmd test`. Os testes contra PostgreSQL (`*FluxoTest`, `EsquemaPostgresTest`) usam Docker e são pulados se ele estiver desligado.
-Frontend: `cd frontend` e `npm test` (testes) ou `npm run typecheck`. Detalhes em [docs/TESTING.md](docs/TESTING.md).
+Frontend: `cd frontend` e `npm test` (testes) ou `npm run typecheck`.
+Ponta a ponta, em navegador real e com auditoria de acessibilidade: `cd frontend`, `npm run e2e:up` (sobe uma pilha isolada em Docker), `npm run e2e`, `npm run e2e:down`. Na primeira vez: `npx playwright install chromium`. Detalhes em [docs/TESTING.md](docs/TESTING.md).
 
 ## Regras de negócio principais
 Resumo em [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md). Esquema em [docs/DATABASE.md](docs/DATABASE.md). Visão geral em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); API em [docs/API.md](docs/API.md); segurança em [docs/SECURITY.md](docs/SECURITY.md).

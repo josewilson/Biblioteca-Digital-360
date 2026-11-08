@@ -1,4 +1,6 @@
-# Só o banco, para desenvolvimento local. A aplicação roda pelo IntelliJ ou `mvnw spring-boot:run`.
+# Desenvolvimento (padrão): só o banco.            docker compose up -d
+# Aplicação completa (banco + backend + web):     docker compose --profile full up -d --build
+# Depois abra http://localhost:3000 (porta mude com WEB_PORT). Variáveis: veja o LEIA-ME.md.
 services:
   postgres:
     image: postgres:16-alpine
@@ -7,8 +9,49 @@ services:
       POSTGRES_USER: ${DB_USER:-biblioteca}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
     ports:
-      - "${DB_PORT:-5435}:5432"   # 5435 é a porta que o application.yml usa por padrão
+      # Só a própria máquina alcança o banco (127.0.0.1): ele não fica exposto na rede.
+      - "127.0.0.1:${DB_PORT:-5433}:5432"   # mesma porta padrão do application.yml (spring.datasource.url)
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-biblioteca} -d biblioteca"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    profiles: ["full"]
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/biblioteca
+      DB_USER: ${DB_USER:-biblioteca}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Sem valor padrão de propósito: vazio faz o backend recusar subir ("JWT_SECRET precisa ter pelo menos 32 caracteres").
+      JWT_SECRET: ${JWT_SECRET:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Atrás do nginx: lê o IP real do cliente (para a auditoria e o bloqueio). Seguro porque a porta 8080 não é publicada.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      APP_NOTIFICATIONS_CHANNEL: ${APP_NOTIFICATIONS_CHANNEL:-log}
+      APP_NOTIFICATIONS_FROM: ${APP_NOTIFICATIONS_FROM:-}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    profiles: ["full"]
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   pgdata:

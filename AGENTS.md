@@ -9,8 +9,8 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 5, backend da Fase 6 (painel, relatórios, notificações) e frontend React (login, painel, acervo, balcão, reservas, multas, relatórios, usuários, área do leitor). Esquema em V1-V6.
-- **Não feito:** OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, testes E2E (Playwright) e auditoria de acessibilidade com ferramenta (Fase 7); edição/exclusão de obra; upload de capa.
+- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (escritos, ainda não executados no GitHub). Esquema em V1-V8.
+- **Não feito:** OpenAPI/Swagger, recuperação de senha, HTTPS embutido, teste de carga, teste manual com leitor de tela, edição/exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `pom.xml` mandam)
@@ -99,3 +99,10 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - **Operação crítica** (devolver, baixar exemplar, cancelar reserva, desativar usuário, isentar multa) sempre com `ConfirmDialog`/diálogo.
 - **Em desenvolvimento** o Vite repassa `/api` para `localhost:8080` (sem CORS). Não adicione `@CrossOrigin` no backend para isso.
 - Sem dependência de UI nova sem necessidade: os componentes de `components/ui.tsx` são próprios (Tailwind) em vez de shadcn/ui, que exige gerar código no projeto.
+
+## 16. Design da interface
+- **Antes de mexer no visual, leia `docs/DESIGN.md`** (direção "ficha de empréstimo", tokens, tipografia, revisão contra o genérico). Mudança visual que contrarie o documento exige atualizar o documento junto.
+- A skill `frontend-design` (plugin oficial da Anthropic, instalado no escopo do usuário) é a referência de método: plano de design → revisão contra o genérico → construir → **olhar as capturas** (`frontend/e2e-shots/`, geradas por `npm run e2e`) e criticar.
+- Cores e fontes vêm dos tokens em `frontend/src/index.css` (`@theme`). Não use cores fora dos tokens, nem fontes de terceiros (a CSP só aceita o próprio site; as fontes são pacotes `@fontsource`).
+- Título de obra sempre em serifa (`workTitleClass`); prazo de empréstimo sempre com `DueStamp`; estado sempre com texto, nunca só cor; sem animação que ninguém pediu (gráficos têm `isAnimationActive={false}`).
+- Toda tela nova entra em `e2e/a11y.spec.ts` (axe, desktop e celular) antes de ser dada como pronta.

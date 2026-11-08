@@ -119,7 +119,7 @@ export function BookDetailPage() {
         title={book.title}
         subtitle={[book.authors.map((a) => a.name).join(', '), book.publisher, book.publicationYear]
           .filter(Boolean)
-          .join(' · ')}
+          .join(', ')}
         actions={
           <Link to="/acervo" className="text-sm font-medium text-brand-700 underline">
             Voltar ao acervo

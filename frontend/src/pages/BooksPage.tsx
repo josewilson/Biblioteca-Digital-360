@@ -86,7 +86,7 @@ export function BooksPage() {
                 {data.content.map((b) => (
                   <tr key={b.id}>
                     <td className={cellClass}>
-                      <Link to={`/acervo/${b.id}`} className="font-medium text-brand-700 underline">
+                      <Link to={`/acervo/${b.id}`} className="font-serif font-medium text-brand-700 underline">
                         {b.title}
                       </Link>
                     </td>

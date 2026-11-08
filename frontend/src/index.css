@@ -1,11 +1,35 @@
 @import "tailwindcss";
 
+/* Identidade: ficha de empréstimo. Papel frio, verde-lombada, vermelho de carimbo só para o que é urgente.
+   Veja docs/DESIGN.md para o porquê de cada escolha. */
 @theme {
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-600: #1d4ed8;
-  --color-brand-700: #1e40af;
-  --color-brand-900: #172554;
+  /* Tipografia (fontes hospedadas por nós; a CSP só aceita o próprio site) */
+  --font-sans: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-serif: "Literata Variable", Georgia, serif;
+
+  /* Neutros: o mesmo matiz esverdeado da marca, de "papel" (50) a "tinta" (900) */
+  --color-slate-50: #f4f6f4;
+  --color-slate-100: #e9edea;
+  --color-slate-200: #d5dcd8;
+  --color-slate-300: #b7c2bd;
+  --color-slate-400: #8f9d97;
+  --color-slate-500: #5e6b67;
+  --color-slate-600: #4a5652;
+  --color-slate-700: #35403d;
+  --color-slate-800: #26302e;
+  --color-slate-900: #1b2523;
+
+  /* Marca: verde-lombada */
+  --color-brand-50: #e6f0ec;
+  --color-brand-100: #cfe3db;
+  --color-brand-600: #24584a;
+  --color-brand-700: #1b4439;
+  --color-brand-900: #12302a;
+
+  /* Carimbo de data: vermelho (atraso, multa), âmbar (vence logo) */
+  --color-stamp: #b3261e;
+  --color-due: #7a4b00;
+  --color-due-bg: #fbefd0;
 }
 
 html {
@@ -13,10 +37,33 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-slate-50 font-sans text-base leading-normal text-slate-900 antialiased;
+}
+
+/* Títulos em serifa de leitura; títulos de obras também (classe font-serif nos componentes). */
+h1,
+h2 {
+  font-family: var(--font-serif);
+}
+
+/* Números alinhados em coluna nas tabelas. */
+table {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Foco sempre visível para quem navega por teclado. */
 :focus-visible {
   @apply outline-2 outline-offset-2 outline-brand-600;
+}
+
+/* Quem pediu menos movimento no sistema operacional não recebe animação nenhuma. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
