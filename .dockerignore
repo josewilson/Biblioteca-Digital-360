@@ -1,9 +1,0 @@
-# Fora da imagem do backend: nada de segredos, dependências do frontend nem lixo de build.
-.git
-.idea
-.env
-.env.*
-target
-docs
-frontend
-*.md

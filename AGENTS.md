@@ -13,20 +13,20 @@ que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até s
 - **Não feito:** OpenAPI/Swagger, recuperação de senha, HTTPS embutido, teste de carga, teste manual com leitor de tela, edição/exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
-## 3. Stack e versões (as de `pom.xml` mandam)
+## 3. Stack e versões (as de `backend/pom.xml` mandam)
 Java 21 · Spring Boot 3.5.16 (Web, Validation, Data JPA, Actuator, Security + OAuth2 resource server para JWT) · PostgreSQL 16 · Flyway · JUnit 5 · Testcontainers · Maven Wrapper.
 Frontend (`frontend/`): React 19, TypeScript 7 (strict), Vite 8, React Router 8, TanStack Query 5, React Hook Form 7 + Zod 4, Tailwind CSS 4, Lucide, Recharts 3, Vitest 5 + Testing Library. Versões exatas em `frontend/package.json`.
 Planejado, ainda **não** no projeto: springdoc OpenAPI, Playwright, Mockito explícito (já vem no starter de teste). Dependência nova só com finalidade concreta, justificada ao usuário.
 
 ## 4. Estrutura
 ```
-src/main/java/br/com/biblioteca/
+backend/src/main/java/br/com/biblioteca/
   BibliotecaApplication.java   ponto de entrada Spring
   shared/error/                exceções e GlobalExceptionHandler
   acervo/ user/ security/ audit/ loan/ notification/ report/ shared/   módulos implementados (loan = circulação; report = painel e relatórios)
   (legado) Livro, Leitor, Biblioteca, CalculadoraDeMulta, App ...   substituir por módulos
   <módulo>/                    futuro: acervo, usuario, emprestimo, reserva, multa, ...
-src/main/resources/db/migration/   Vnn__descricao.sql
+backend/src/main/resources/db/migration/   Vnn__descricao.sql
 docs/                              documentação complementar
 frontend/                          aplicação React (src/lib = API/auth/formatação, src/components, src/pages, src/schemas.ts)
 ```
@@ -70,7 +70,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - `ddl-auto: validate`. Constraints no banco quando possível (unicidade, FK composta, CHECK).
 
 ## 12. Testes
-- Backend: `./mvnw test` (Windows: `mvnw.cmd test`). Frontend: `cd frontend && npm test` e `npm run build`. Só diga que passou se rodou e viu o resultado.
+- Backend: `cd backend && ./mvnw test` (Windows: `mvnw.cmd test`). Frontend: `cd frontend && npm test` e `npm run build`. Só diga que passou se rodou e viu o resultado.
 - Regra de negócio: teste unitário. Esquema/SQL: `EsquemaPostgresTest` (Testcontainers; **pulado sem Docker**, diga isso no relatório).
 
 ## 13. Commits e manutenção

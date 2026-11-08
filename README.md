@@ -191,30 +191,34 @@ sequenceDiagram
 ## Estrutura do projeto
 ```text
 Biblioteca-Digital-360/
-├── src/main/java/br/com/biblioteca/
-│   ├── acervo/            obras, exemplares, autores, editoras, categorias
-│   ├── loan/              empréstimo, devolução, renovação, reserva, multa, pagamento
-│   ├── user/ security/    usuários, perfis, login JWT, bloqueio por tentativas
-│   ├── notification/      fila de avisos, canais log/smtp, vencimento e atraso
-│   ├── report/            painel e relatórios (SQL de leitura, CSV)
-│   ├── audit/ shared/     auditoria, erros (ProblemDetail), relógio, validações
-│   └── (raiz)             código legado da aula, a ser removido
-├── src/main/resources/
-│   ├── application.yml    configuração por variáveis de ambiente
-│   └── db/migration/      Flyway V1–V8
-├── src/test/              unitários, integração e Testcontainers
-├── frontend/
-│   ├── src/lib/           cliente HTTP, autenticação, formatação, tipos
-│   ├── src/components/    UI própria (Tailwind), layout, seletores
-│   ├── src/pages/         uma página por tela
-│   ├── e2e/               Playwright + axe (acessibilidade)
-│   └── nginx/             configuração do servidor web e cabeçalhos de segurança
-├── docs/                  API, arquitetura, banco, segurança, testes, design...
-├── .github/               workflow de CI e Dependabot
-├── Dockerfile             imagem do backend (multi-stage, usuário não root)
-├── docker-compose.yml     banco (sempre) + backend e site (perfil `full`)
-├── AGENTS.md              regras para pessoas e agentes de IA
-└── LEIA-ME.md             guia de configuração e execução em detalhe
+├── backend/                         API Spring Boot (Maven)
+│   ├── src/main/java/br/com/biblioteca/
+│   │   ├── acervo/                  obras, exemplares, autores, editoras, categorias
+│   │   ├── loan/                    empréstimo, devolução, renovação, reserva, multa, pagamento
+│   │   ├── user/ security/          usuários, perfis, login JWT, bloqueio por tentativas
+│   │   ├── notification/            fila de avisos, canais log/smtp, vencimento e atraso
+│   │   ├── report/                  painel e relatórios (SQL de leitura, CSV)
+│   │   ├── audit/ shared/           auditoria, erros (ProblemDetail), relógio, validações
+│   │   └── (raiz)                   código legado da aula, a ser removido
+│   ├── src/main/resources/
+│   │   ├── application.yml          configuração por variáveis de ambiente
+│   │   └── db/migration/            Flyway V1–V8
+│   ├── src/test/                    unitários, integração e Testcontainers
+│   ├── Dockerfile                   imagem do backend (multi-stage, usuário não root)
+│   └── pom.xml · mvnw · mvnw.cmd    build Maven (wrapper incluso)
+├── frontend/                        SPA React + TypeScript (Vite)
+│   ├── src/lib/                     cliente HTTP, autenticação, formatação, tipos
+│   ├── src/components/              UI própria (Tailwind), layout, seletores
+│   ├── src/pages/                   uma página por tela
+│   ├── e2e/                         Playwright + axe (acessibilidade)
+│   ├── nginx/                       servidor web e cabeçalhos de segurança
+│   └── Dockerfile                   imagem do site (node → nginx)
+├── docs/                            API, arquitetura, banco, segurança, testes, design...
+├── .github/                         workflow de CI e Dependabot
+├── docker-compose.yml               banco (sempre) + backend e site (perfil `full`)
+├── AGENTS.md                        regras para pessoas e agentes de IA
+├── LEIA-ME.md                       guia de configuração e execução em detalhe
+└── README.md                        esta página
 ```
 
 ## Tecnologias
@@ -244,15 +248,15 @@ Abra `http://localhost:3000` e entre com o administrador. Depois do primeiro ace
 ```bash
 docker compose up -d                  # só o PostgreSQL (porta 5433 por padrão; mude com DB_PORT)
 export DB_PASSWORD=... JWT_SECRET=... # a aplicação não lê o .env sozinha
-./mvnw spring-boot:run                # API em http://localhost:8080
+cd backend && ./mvnw spring-boot:run              # API em http://localhost:8080
 cd frontend && npm install && npm run dev   # site em http://localhost:5173 (proxy /api)
 ```
-No PowerShell: `$env:DB_PASSWORD="..."; $env:JWT_SECRET="..."; .\mvnw.cmd spring-boot:run`.
+No PowerShell: `$env:DB_PASSWORD="..."; $env:JWT_SECRET="..."; cd backend; .\mvnw.cmd spring-boot:run`.
 Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-mail SMTP e demais detalhes no [LEIA-ME.md](LEIA-ME.md) e em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Testes e qualidade
 ```bash
-./mvnw verify                                   # backend: 142 testes (com PostgreSQL real via Testcontainers)
+cd backend && ./mvnw verify                                 # backend: 142 testes (com PostgreSQL real via Testcontainers)
 cd frontend && npm test                         # frontend: 55 testes
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 26 testes de ponta a ponta + axe
 ```

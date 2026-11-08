@@ -22,7 +22,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 
 ## Tecnologias
 Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
-Frontend: React 19 · TypeScript 7 (strict) · Vite 8 · React Router 8 · TanStack Query 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · Recharts 3 · Lucide · Vitest 5 + Testing Library. Versões exatas em `pom.xml` e `frontend/package.json`.
+Frontend: React 19 · TypeScript 7 (strict) · Vite 8 · React Router 8 · TanStack Query 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · Recharts 3 · Lucide · Vitest 5 + Testing Library. Versões exatas em `backend/pom.xml` e `frontend/package.json`.
 
 ## Pré-requisitos
 JDK 21, Docker (banco local e testes) e Node.js (testado com a versão 24; o Vite 8 pede Node 20.19+ ou 22.12+). O Maven vem pelo wrapper.
@@ -44,7 +44,7 @@ Banco: `docker compose up -d`
 A aplicação **não lê o `.env` sozinha** (só o `docker compose` lê): informe as variáveis na configuração de execução do IntelliJ (campo *Environment variables*) ou no terminal.
 
 Pelo IntelliJ: abra `BibliotecaApplication`, defina `DB_PASSWORD` e `JWT_SECRET` (e `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro start) e rode.
-Pelo terminal (Windows PowerShell): `$env:DB_PASSWORD="sua-senha"; $env:JWT_SECRET="texto-com-32-ou-mais-caracteres"; .\mvnw.cmd spring-boot:run`
+Pelo terminal (Windows PowerShell): `$env:DB_PASSWORD="sua-senha"; $env:JWT_SECRET="texto-com-32-ou-mais-caracteres"; cd backend; .\mvnw.cmd spring-boot:run`
 
 Programa de exemplo do legado: `App.java`.
 
@@ -65,7 +65,7 @@ npm run dev          # abre em http://localhost:5173
 O Vite repassa `/api` ao backend (sem CORS). Entre com o administrador criado por `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro start do backend. Para gerar a versão de produção: `npm run build` (saída em `frontend/dist`).
 
 ## Testes
-Backend: `mvnw.cmd test`. Os testes contra PostgreSQL (`*FluxoTest`, `EsquemaPostgresTest`) usam Docker e são pulados se ele estiver desligado.
+Backend: `cd backend` e `mvnw.cmd test`. Os testes contra PostgreSQL (`*FluxoTest`, `EsquemaPostgresTest`) usam Docker e são pulados se ele estiver desligado.
 Frontend: `cd frontend` e `npm test` (testes) ou `npm run typecheck`.
 Ponta a ponta, em navegador real e com auditoria de acessibilidade: `cd frontend`, `npm run e2e:up` (sobe uma pilha isolada em Docker), `npm run e2e`, `npm run e2e:down`. Na primeira vez: `npx playwright install chromium`. Detalhes em [docs/TESTING.md](docs/TESTING.md).
 

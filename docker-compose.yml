@@ -1,6 +1,7 @@
 # Desenvolvimento (padrão): só o banco.            docker compose up -d
 # Aplicação completa (banco + backend + web):     docker compose --profile full up -d --build
 # Depois abra http://localhost:3000 (porta mude com WEB_PORT). Variáveis: veja o LEIA-ME.md.
+name: biblioteca-digital-360   # fixa o nome do projeto: renomear a pasta não troca containers nem volume
 services:
   postgres:
     image: postgres:16-alpine
@@ -22,7 +23,7 @@ services:
 
   backend:
     profiles: ["full"]
-    build: .
+    build: ./backend
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/biblioteca
       DB_USER: ${DB_USER:-biblioteca}

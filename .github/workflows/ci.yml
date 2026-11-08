@@ -20,6 +20,9 @@ jobs:
     name: Backend (testes + PostgreSQL real)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6

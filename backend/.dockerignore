@@ -1,0 +1,5 @@
+# Fora da imagem do backend: nada de segredos nem lixo de build.
+.idea
+.env
+.env.*
+target

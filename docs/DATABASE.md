@@ -1,6 +1,6 @@
 # Banco de dados
 
-PostgreSQL 16, esquema só por Flyway (`src/main/resources/db/migration`). Dinheiro em reais (`numeric(10,2)`); datas `timestamptz`.
+PostgreSQL 16, esquema só por Flyway (`backend/src/main/resources/db/migration`). Dinheiro em reais (`numeric(10,2)`); datas `timestamptz`.
 
 Tabelas (V1): roles, permissions, role_permissions, users, user_roles, authors, publishers, categories, books,
 book_authors, book_categories, book_copies, loans, loan_renewals, reservations, fine_rates, fines, payments, notifications, audit_logs.

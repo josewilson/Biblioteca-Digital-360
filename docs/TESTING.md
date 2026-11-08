@@ -2,7 +2,7 @@
 
 Contagens da última execução completa (todos passando): **backend 142** (`mvnw test`), **frontend 55** (`npm test`) e **26 de ponta a ponta** em navegador real (`npm run e2e`).
 
-## Backend (`./mvnw test`, Windows: `mvnw.cmd test`)
+## Backend (`cd backend && ./mvnw test`, Windows: `mvnw.cmd test`)
 | Tipo | Onde | O que prova |
 |---|---|---|
 | Unidade (Mockito, relógio fixo) | `*ServiceTest`, `ReportCsvTest`, `SmtpChannelTest`, `JwtServiceTest` | regras de empréstimo, multa, reserva, pagamento, isenção; CSV seguro; JWT |
@@ -10,7 +10,7 @@ Contagens da última execução completa (todos passando): **backend 142** (`mvn
 | Fluxo contra PostgreSQL real (Testcontainers) | `*FluxoTest`, `EsquemaPostgresTest` | migrações V1–V6, mapeamento JPA, regras impostas pelo banco, painel e relatórios com números exatos, avisos |
 | Concorrência | `EmprestimoFluxoTest`, `ReservaMultaFluxoTest` | 5 balcões no mesmo exemplar = 1 empréstimo; 6 empréstimos do mesmo leitor = 3; 4 pagamentos da mesma multa = 1 |
 
-Os testes de fluxo **precisam do Docker** e são pulados sem ele (o Maven mostra `Skipped`). Um relógio controlável (`MutableClock`) simula atrasos sem esperar. O agendamento é desligado nos testes (`src/test/resources/application.properties`); as rotinas são chamadas à mão.
+Os testes de fluxo **precisam do Docker** e são pulados sem ele (o Maven mostra `Skipped`). Um relógio controlável (`MutableClock`) simula atrasos sem esperar. O agendamento é desligado nos testes (`backend/src/test/resources/application.properties`); as rotinas são chamadas à mão.
 
 ## Frontend (`cd frontend`, `npm test`)
 Vitest + Testing Library em jsdom, com `fetch` simulado (`src/test/utils.tsx`).

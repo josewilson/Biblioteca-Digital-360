@@ -8,7 +8,7 @@ navegador ──(JWT)──► /api/v1 (Spring MVC) ──► serviços ──�
                                                └─► notificações (fila na tabela notifications)
 ```
 
-## Backend (`src/main/java/br/com/biblioteca`)
+## Backend (`backend/src/main/java/br/com/biblioteca`)
 | Pacote | Responsabilidade |
 |---|---|
 | `security`, `user` | login JWT, perfis, cadastro de usuários, regras de escalada de privilégio |
