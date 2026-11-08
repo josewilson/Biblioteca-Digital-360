@@ -3,11 +3,11 @@
 Sistema Integrado de Gestão Bibliotecária (SIGB) para instituições de ensino: acervo, usuários,
 empréstimos, devoluções, reservas, renovações, multas, pagamentos e relatórios.
 
-> **Estado:** em construção. Fases 1 a 5 e o backend da Fase 6 concluídos (fundação, banco, login, usuários, acervo, circulação, painel, relatórios e notificações). O restante está no [roadmap](docs/ROADMAP.md).
+> **Estado:** em construção. Fases 1 a 6 concluídas (fundação, banco, login, usuários, acervo, circulação, painel, relatórios, notificações e interface web). O restante está no [roadmap](docs/ROADMAP.md).
 
 ## O que existe hoje
 - Aplicação Spring Boot que sobe e expõe `/actuator/health`.
-- Esquema PostgreSQL completo versionado com Flyway (`V1`): usuários, perfis, acervo, exemplares, empréstimos, reservas, multas, pagamentos, notificações e auditoria.
+- Esquema PostgreSQL completo versionado com Flyway (`V1` a `V6`): usuários, perfis, acervo, exemplares, empréstimos, reservas, multas, pagamentos, notificações e auditoria.
 - Regras garantidas pelo banco: exemplar de consulta não pode ser emprestado; exemplar não tem dois empréstimos ativos; uma multa por empréstimo.
 - Tratamento central de erros (`ProblemDetail`).
 - Login com JWT, perfis, cadastro e desativação de usuários, auditoria de login (veja `docs/SECURITY.md`).
@@ -15,15 +15,17 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Balcão: empréstimo, devolução (com multa por atraso) e renovação, com limite de 3 por leitor, bloqueio por atraso ou multa em aberto e proteção contra operações simultâneas (veja `docs/BUSINESS_RULES.md`).
 - Reservas com fila (exemplar guardado para o 1º, prazo de retirada, expiração), pagamento de multa com comprovante e isenção autorizada com justificativa.
 - Painel gerencial e 8 relatórios (JSON ou CSV) para a equipe; avisos por e-mail (canal configurável) para empréstimo, vencimento, atraso, reserva, multa e pagamento.
+- Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
 - Código **legado** da aula (Cap 04): `Livro`, `Leitor`, `Biblioteca`, `CalculadoraDeMulta`, com 11 testes. Será substituído aos poucos.
 
-**Ainda não existe:** telas (frontend React), OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI.
+**Ainda não existe:** OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, testes de ponta a ponta no navegador (Playwright), edição/exclusão de obra e envio de imagem de capa.
 
 ## Tecnologias
-Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
+Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
+Frontend: React 19 · TypeScript 7 (strict) · Vite 8 · React Router 8 · TanStack Query 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · Recharts 3 · Lucide · Vitest 5 + Testing Library. Versões exatas em `pom.xml` e `frontend/package.json`.
 
 ## Pré-requisitos
-JDK 21 e Docker (para o banco local e para os testes de esquema). O Maven vem pelo wrapper.
+JDK 21, Docker (banco local e testes) e Node.js (testado com a versão 24; o Vite 8 pede Node 20.19+ ou 22.12+). O Maven vem pelo wrapper.
 
 ## Configuração
 ```
@@ -46,11 +48,21 @@ Pelo terminal (Windows PowerShell): `$env:DB_PASSWORD="sua-senha"; $env:JWT_SECR
 
 Programa de exemplo do legado: `App.java`.
 
+## Interface web (frontend)
+Em outro terminal, com o backend rodando na porta 8080:
+```
+cd frontend
+npm install
+npm run dev          # abre em http://localhost:5173
+```
+O Vite repassa `/api` ao backend (sem CORS). Entre com o administrador criado por `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro start do backend. Para gerar a versão de produção: `npm run build` (saída em `frontend/dist`).
+
 ## Testes
-`mvnw.cmd test`. Os testes `EsquemaPostgresTest` usam Docker e são pulados se ele estiver desligado.
+Backend: `mvnw.cmd test`. Os testes contra PostgreSQL (`*FluxoTest`, `EsquemaPostgresTest`) usam Docker e são pulados se ele estiver desligado.
+Frontend: `cd frontend` e `npm test` (testes) ou `npm run typecheck`. Detalhes em [docs/TESTING.md](docs/TESTING.md).
 
 ## Regras de negócio principais
-Resumo em [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md). Esquema em [docs/DATABASE.md](docs/DATABASE.md).
+Resumo em [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md). Esquema em [docs/DATABASE.md](docs/DATABASE.md). Visão geral em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); API em [docs/API.md](docs/API.md); segurança em [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Contribuição
 Leia o [AGENTS.md](AGENTS.md) (vale para pessoas e agentes de IA): convenções, camadas e padrão de commits.
