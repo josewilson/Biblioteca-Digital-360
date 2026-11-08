@@ -2,7 +2,7 @@ spring:
   application:
     name: biblioteca-digital-360
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5435/biblioteca}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/biblioteca}
     username: ${DB_USER:biblioteca}
     password: ${DB_PASSWORD}   # sem valor padrão: defina DB_PASSWORD no ambiente (a aplicação não sobe sem ela)
   jpa:
@@ -19,8 +19,8 @@ management:
         include: health,info
   health:
     mail:
-      # Queda do servidor de e-mail nao pode marcar o sistema todo como fora do ar (o Docker reiniciaria o container).
-      # Os avisos tem tentativas proprias (tabela notifications); a saude considera so o que e essencial (banco).
+      # Queda do servidor de e-mail não pode marcar o sistema todo como fora do ar (o Docker reiniciaria o container).
+      # Os avisos têm tentativas próprias (tabela notifications); a saúde considera só o que é essencial (banco).
       enabled: false
 
 app:

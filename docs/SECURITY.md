@@ -24,6 +24,10 @@ Consulta ao acervo (`GET`): qualquer autenticado. Escrita em acervo e `/users`: 
 - **CSV:** textos que começam com `=`, `+`, `-` ou `@` recebem um apóstrofo na frente (evita que o Excel/Sheets execute como fórmula); números não são alterados.
 - O log de notificações mascara o e-mail (`a***@dominio`). O SMTP usa credenciais só por variável de ambiente.
 
+## Senha do banco
+`DB_PASSWORD` **não tem valor padrão**: nem no `application.yml` nem no compose. Sem ela a aplicação não sobe e o compose não cria o banco. (Houve um padrão de desenvolvimento durante a Fase 7; foi removido por decisão do usuário.) `JWT_SECRET` também não tem padrão.
+Para rodar localmente, defina `DB_PASSWORD` (e `JWT_SECRET`) nas variáveis de ambiente da execução (IntelliJ ou terminal).
+
 ## Revisão de segurança da Fase 7
 Revisão feita sobre o código e sobre a pilha rodando em containers. O que foi **achado e corrigido**:
 

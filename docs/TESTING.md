@@ -1,6 +1,6 @@
 # Testes
 
-Contagens da última execução completa (todos passando): **backend 139** (`mvnw test`), **frontend 55** (`npm test`) e **26 de ponta a ponta** em navegador real (`npm run e2e`).
+Contagens da última execução completa (todos passando): **backend 142** (`mvnw test`), **frontend 55** (`npm test`) e **26 de ponta a ponta** em navegador real (`npm run e2e`).
 
 ## Backend (`./mvnw test`, Windows: `mvnw.cmd test`)
 | Tipo | Onde | O que prova |
