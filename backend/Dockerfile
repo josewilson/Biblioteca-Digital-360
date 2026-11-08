@@ -1,6 +1,6 @@
 # Backend da Biblioteca Digital 360. Build em duas etapas: o JDK/Maven fica só na etapa de build.
 
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /build
 # Dependências primeiro: a camada só é refeita quando o pom.xml muda.
 COPY pom.xml .
