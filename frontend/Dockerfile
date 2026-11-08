@@ -1,7 +1,7 @@
 # Frontend: compila com Node e serve os arquivos estáticos com nginx, que também repassa /api ao backend
 # (mesma origem: sem CORS).
 
-FROM node:24-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
