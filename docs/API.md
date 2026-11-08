@@ -45,3 +45,12 @@ Pendente: capa por upload (hoje só `coverUrl`), editar/excluir obra, OpenAPI/Sw
 | `POST /fines/{id}/waive` `{reason}` | admins e bibliotecário | isenta, com justificativa |
 | `GET /payments/{id}` | equipe | comprovante |
 | `GET /me/fines?status=` | autenticado | as próprias multas |
+
+## Painel e relatórios (Fase 6, backend) — somente equipe
+| Método e caminho | O que faz |
+|---|---|
+| `GET /dashboard` | indicadores gerenciais (totais, atrasos, reservas, multas, rankings, movimento diário de 30 dias) |
+| `GET /reports/{nome}?from=AAAA-MM-DD&to=AAAA-MM-DD&format=json\|csv` | `loans`, `returns`, `overdue`, `fines`, `payments`, `users`, `top-books`, `availability` |
+
+Resposta JSON: `{ "report", "columns": [...], "rows": [[...]], "truncated" }`. Com `format=csv` baixa `relatorio-{nome}.csv` (UTF-8 com BOM).
+Erros: 404 relatório inexistente; 422 período invertido, maior que 366 dias ou formato inválido; 400 data malformada; 403 para leitores.

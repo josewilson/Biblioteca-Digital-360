@@ -9,8 +9,8 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 4 e Fase 5 completa (empréstimo, devolução, renovação, reservas com fila, multa, pagamento, isenção). Esquema em V1-V5.
-- **Não feito:** relatórios, dashboard, envio real de notificações (e-mail), recuperação de senha, frontend, Docker da aplicação, CI.
+- **Feito:** Fases 1 a 5 e o backend da Fase 6 (painel, relatórios com CSV, notificações por canal configurável). Esquema em V1-V6.
+- **Não feito:** frontend React (Fase 6b), OpenAPI/Swagger, recuperação de senha, Docker da aplicação, CI, revisão de desempenho e testes E2E (Fase 7).
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `pom.xml` mandam)
@@ -23,7 +23,7 @@ React + TypeScript + Vite (Fase 6). Dependência nova só com finalidade concret
 src/main/java/br/com/biblioteca/
   BibliotecaApplication.java   ponto de entrada Spring
   shared/error/                exceções e GlobalExceptionHandler
-  acervo/ user/ security/ audit/ loan/ notification/ shared/   módulos implementados (loan = circulação: empréstimo, reserva, multa, pagamento)
+  acervo/ user/ security/ audit/ loan/ notification/ report/ shared/   módulos implementados (loan = circulação; report = painel e relatórios)
   (legado) Livro, Leitor, Biblioteca, CalculadoraDeMulta, App ...   substituir por módulos
   <módulo>/                    futuro: acervo, usuario, emprestimo, reserva, multa, ...
 src/main/resources/db/migration/   Vnn__descricao.sql
@@ -48,7 +48,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - **Controller:** recebe/valida DTO, chama service, devolve DTO. Nada de regra.
 - **Service:** regra de negócio e transação (`@Transactional`).
 - **Domain:** invariantes que não dependem de framework.
-- **Repository:** só acesso a dados (Spring Data). Sem regra.
+- **Repository:** só acesso a dados (Spring Data). Sem regra. Exceção: `report` e `notification` usam SQL (`JdbcTemplate`) para agregações de leitura e para a fila de avisos; SQL sempre fixo, nunca montado com texto do usuário.
 
 ## 8. Entidades, DTOs, endpoints
 - Entidade JPA nunca sai pela API; use DTO (`record` permitido em DTOs).
@@ -60,7 +60,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - Tradução para HTTP só em `GlobalExceptionHandler`. Nunca vazar stack trace.
 
 ## 10. Segurança
-- Sem segredo no código: tudo por variável de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`). `.env` fora do Git.
+- Sem segredo no código: tudo por variável de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_*`, `spring.mail.*`). `.env` e `.env.example` ficam fora do Git (decisão do usuário): as variáveis estão descritas no LEIA-ME.md.
 - Perfis: SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT, TEACHER, STUDENT, EMPLOYEE, VISITOR. Autorização na Fase 3.
 - LGPD: coletar só o necessário (CPF opcional).
 

@@ -5,5 +5,5 @@
 - [x] Fase 3 — Segurança e usuários (JWT, perfis, cadastro). Pendentes em docs/SECURITY.md
 - [x] Fase 4 — Acervo (obras, exemplares, autores, editoras, categorias). Pendentes: upload de capa, edição/exclusão de obra
 - [x] Fase 5 — Empréstimo, devolução, renovação, reservas, multa, pagamento e isenção
-- [ ] Fase 6 — Frontend React, dashboard, relatórios, notificações
+- [ ] Fase 6 — backend pronto (painel, relatórios, notificações). Falta: frontend React (login, painel, acervo, balcão, relatórios) e OpenAPI/Swagger
 - [ ] Fase 7 — Testes E2E, revisão de segurança e desempenho, implantação

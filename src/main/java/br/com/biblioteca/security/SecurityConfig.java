@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/fines/*/waive").hasAnyRole(Access.WAIVER_ROLES)
                         .requestMatchers("/api/v1/books/**", "/api/v1/copies/**", "/api/v1/authors",
                                 "/api/v1/publishers", "/api/v1/categories", "/api/v1/users/**", "/api/v1/loans/**",
-                                "/api/v1/reservations/**", "/api/v1/fines/**", "/api/v1/payments/**")
+                                "/api/v1/reservations/**", "/api/v1/fines/**", "/api/v1/payments/**", "/api/v1/dashboard", "/api/v1/reports/**")
                         .hasAnyRole(Access.STAFF_ROLES)
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(rolesConverter())));

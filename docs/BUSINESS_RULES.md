@@ -26,7 +26,7 @@ Status: **definidas**; só as marcadas (banco) já são impostas pelo código at
 - **Perfil do leitor com vários perfis:** vale a política com maior limite e a maior multa por dia.
 - **Prazo, renovações e dias por renovação** vêm de `loan_limits` (padrões **assumidos**: 14 dias, 2 renovações de 7 dias — a administração deve ajustar).
 - **Multa:** dias corridos de atraso (pela data na zona `America/Sao_Paulo`; horas de atraso no mesmo dia do vencimento não cobram) × valor do perfil em `fine_rates`. Perfil sem valor configurado **não paga multa**. Funcionário tem valor padrão **assumido** de R$ 1,00/dia (V5): ajuste conforme a instituição. Uma multa por empréstimo.
-- **Aviso da multa** é gravado em `notifications` na mesma transação; o envio por e-mail é da Fase 6 (nunca dentro da transação).
+- **Avisos** são gravados em `notifications` na mesma transação da operação e entregues depois, fora da transação (ver "Notificações, painel e relatórios" abaixo).
 - **Renovação:** só empréstimo ativo e não atrasado, até o limite de renovações; novo prazo = prazo atual + dias da renovação.
 - **Concorrência:** travas de linha no leitor, no exemplar e no empréstimo + índice único parcial no banco.
 
@@ -40,3 +40,11 @@ Status: **definidas**; só as marcadas (banco) já são impostas pelo código at
 - **Pagamento:** só o valor integral da multa, uma única vez (trava + UNIQUE); forma: `DINHEIRO`, `PIX`, `CARTAO_DEBITO`, `CARTAO_CREDITO`. Sem integração com provedor financeiro. O comprovante é `GET /payments/{id}`.
 - **Isenção:** só `SUPER_ADMIN`, `ADMIN_INSTITUTION` e `LIBRARIAN`, com justificativa obrigatória; registra o responsável. Multa paga não se isenta e isenta não se paga.
 - Multa em aberto continua bloqueando novos empréstimos; paga ou isenta libera.
+
+## Notificações, painel e relatórios (Fase 6, backend)
+- **Avisos criados:** empréstimo confirmado, devolução amanhã, atraso, reserva disponível, reserva expirada, multa registrada, pagamento confirmado.
+- **Vencimento e atraso:** rotina diária às 08:00 (zona `America/Sao_Paulo`); cada empréstimo recebe cada um desses dois avisos **uma única vez** (`dedup_key`). "Atrasado" segue a mesma regra da multa: a partir do dia seguinte ao vencimento.
+- **Entrega:** a cada minuto, até 50 avisos pendentes; falha conta tentativa e tenta de novo, no máximo 5 vezes (`attempts`, `last_error`). Canal por configuração: `log` (padrão) ou `smtp`.
+- **Painel:** totais de obras, exemplares ativos (exclui perdidos e baixados), usuários ativos, empréstimos ativos e atrasados, reservas pendentes (na fila ou aguardando retirada), multas em aberto (quantidade e soma), 5 obras e 5 categorias mais emprestadas, empréstimos e devoluções por dia nos últimos 30 dias.
+- **Relatórios** (equipe): `loans`, `returns`, `overdue`, `fines`, `payments`, `users` (só totais por perfil), `top-books`, `availability`. Período inclusivo, padrão 30 dias, máximo 366; até 10.000 linhas (`truncated` avisa se passou).
+- "Obras mais consultadas" = **mais emprestadas**: o sistema não registra consulta no local.
