@@ -9,7 +9,7 @@ COPY src src
 # Os testes rodam no CI (precisam de Docker); aqui só empacota.
 RUN mvn -B -q -DskipTests package && cp target/biblioteca-digital-360-*.jar /build/app.jar
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 # Não roda como root.
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
