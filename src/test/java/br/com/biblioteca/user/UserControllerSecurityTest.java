@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -33,6 +34,19 @@ class UserControllerSecurityTest {
 
     @MockitoBean
     UserService service;
+
+    @Test
+    void respostasDaApiVemComCabecalhosDeSeguranca() throws Exception {
+        when(service.list(any())).thenReturn(new PageImpl<>(List.of()));
+
+        mvc.perform(get("/api/v1/users").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN"))))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    }
 
     @Test
     void semTokenRecebe401() throws Exception {

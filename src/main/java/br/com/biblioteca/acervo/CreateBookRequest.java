@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /** A obra nasce já com seus exemplares: precisa de pelo menos 1 CONSULTA e 1 CIRCULANTE. */
@@ -18,7 +19,8 @@ public record CreateBookRequest(
         @Min(1000) @Max(2200) Integer publicationYear,
         @Size(max = 30) String language,
         String description,
-        @Size(max = 500) String coverUrl,
+        // Só http(s): o endereço vira <img src> na tela; esquemas como javascript: ou data: não são aceitos.
+        @Size(max = 500) @Pattern(regexp = "^(https?://\\S+)?$", message = "Use um endereço http:// ou https://") String coverUrl,
         Long publisherId,
         Set<Long> authorIds,
         Set<Long> categoryIds,
