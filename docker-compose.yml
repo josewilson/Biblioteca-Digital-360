@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${DB_USER:-biblioteca}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5435}:5432"   # 5435 é a porta que o application.yml usa por padrão
     volumes:
       - pgdata:/var/lib/postgresql/data
 volumes:

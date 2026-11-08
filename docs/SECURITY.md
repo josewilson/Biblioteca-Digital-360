@@ -23,3 +23,4 @@ Consulta ao acervo (`GET`): qualquer autenticado. Escrita em acervo e `/users`: 
 - SQL dos relatórios é fixo; o usuário escolhe só o relatório (lista fechada) e as datas. Slug desconhecido: 404.
 - **CSV:** textos que começam com `=`, `+`, `-` ou `@` recebem um apóstrofo na frente (evita que o Excel/Sheets execute como fórmula); números não são alterados.
 - O log de notificações mascara o e-mail (`a***@dominio`). O SMTP usa credenciais só por variável de ambiente.
+

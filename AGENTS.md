@@ -61,7 +61,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - Tradução para HTTP só em `GlobalExceptionHandler`. Nunca vazar stack trace.
 
 ## 10. Segurança
-- Sem segredo no código: tudo por variável de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_*`, `spring.mail.*`). `.env` e `.env.example` ficam fora do Git (decisão do usuário): as variáveis estão descritas no LEIA-ME.md.
+- Sem segredo no código: tudo por variável de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_*`, `spring.mail.*`). `DB_PASSWORD` e `JWT_SECRET` **não têm valor padrão** (a aplicação não sobe sem eles). `.env` e `.env.example` ficam fora do Git (decisão do usuário): as variáveis estão descritas no LEIA-ME.md.
 - Perfis: SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT, TEACHER, STUDENT, EMPLOYEE, VISITOR. Autorização na Fase 3.
 - LGPD: coletar só o necessário (CPF opcional).
 

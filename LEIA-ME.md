@@ -36,7 +36,7 @@ JWT_SECRET=texto-aleatorio-com-32-ou-mais-caracteres
 ADMIN_EMAIL=seu-email@exemplo.com      # só no 1º start: cria o SUPER_ADMIN
 ADMIN_PASSWORD=senha-do-administrador  # só no 1º start (mínimo 8 caracteres)
 ```
-Variáveis: `JWT_SECRET` (obrigatória, ≥ 32 caracteres), `ADMIN_EMAIL`/`ADMIN_PASSWORD` (cria o 1º SUPER_ADMIN), `DB_URL` (padrão `jdbc:postgresql://localhost:5432/biblioteca`), `DB_USER`, `DB_PASSWORD` (obrigatória, sem padrão).
+Variáveis: `JWT_SECRET` (obrigatória, ≥ 32 caracteres), `DB_PASSWORD` (obrigatória, **sem valor padrão**), `ADMIN_EMAIL`/`ADMIN_PASSWORD` (cria o 1º SUPER_ADMIN), `DB_URL` (padrão `jdbc:postgresql://localhost:5433/biblioteca`; a porta padrão fica em `application.yml`) e `DB_USER` (padrão `biblioteca`). O `docker compose up -d` publica o banco na mesma porta padrão (mude com `DB_PORT`) e só para a própria máquina (127.0.0.1).
 
 ## Executar
 Banco: `docker compose up -d`

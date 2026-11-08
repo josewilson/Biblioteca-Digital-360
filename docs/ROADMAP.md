@@ -6,4 +6,4 @@
 - [x] Fase 4 — Acervo (obras, exemplares, autores, editoras, categorias). Pendentes: upload de capa, edição/exclusão de obra
 - [x] Fase 5 — Empréstimo, devolução, renovação, reservas, multa, pagamento e isenção
 - [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendentes: OpenAPI/Swagger, edição/exclusão de obra, upload de capa
-- [ ] Fase 7 — Playwright (E2E), auditoria de acessibilidade com ferramenta, revisão de segurança e desempenho, Dockerfile da aplicação, GitHub Actions, implantação
+- [ ] Fase 7 — em andamento: ✔ revisão de segurança, ✔ revisão de desempenho (docs/PERFORMANCE.md). Falta: Dockerfiles e compose de implantação, Playwright (E2E) + acessibilidade por ferramenta, GitHub Actions
