@@ -51,5 +51,5 @@ Revisão feita sobre o código e sobre a pilha rodando em containers. O que foi 
 - **Sem limite de requisições por IP** no nginx; só o bloqueio de login.
 - **Política de senha** só exige 8 caracteres (sem lista de senhas comuns).
 - **Imagens de capa externas** são carregadas direto do endereço informado (o navegador do leitor contata esse servidor).
-- **Ações do GitHub** usam tags de versão (`@v4`), não SHA fixo.
+- **Ações do GitHub** usam tags de versão (`@v7`, `@v6`), não SHA fixo.
 - Não foi feito teste de intrusão, análise estática (SAST) nem varredura de dependências do backend (Maven); o Dependabot está configurado para avisar.
