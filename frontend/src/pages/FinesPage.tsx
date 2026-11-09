@@ -150,7 +150,6 @@ function WaiveDialog({ fine, who, onClose }: { fine: Fine | null; who: string; o
 
 export function FinesPage() {
   const { canWaive } = useAuth()
-  const userName = useUserNames()
   const [status, setStatus] = useState<FineStatus | ''>('ABERTA')
   const [page, setPage] = useState(0)
   const [paying, setPaying] = useState<Fine | null>(null)
@@ -160,6 +159,7 @@ export function FinesPage() {
     queryKey: ['fines', status, page],
     queryFn: () => api<Page<Fine>>('/fines', { params: { status, page, size: 10, sort: 'id,desc' } }),
   })
+  const userName = useUserNames((list.data?.content ?? []).map((item) => item.userId))
 
   return (
     <>

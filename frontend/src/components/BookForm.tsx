@@ -11,7 +11,8 @@ import { Alert, Button, ErrorAlert, Field, inputClass } from './ui'
 
 const EMPTY_COPY = { barcode: '', kind: 'CIRCULANTE', condition: 'BOM', location: '' } as const
 
-export function BookForm({ onCreated, onCancel }: { onCreated: (book: Book) => void; onCancel: () => void }) {
+/** Com `book`, edita os dados da obra; os exemplares têm operações próprias na página da obra. */
+export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (book: Book) => void; onCancel: () => void }) {
   const queryClient = useQueryClient()
   const [serverError, setServerError] = useState<unknown>(null)
 
@@ -27,30 +28,37 @@ export function BookForm({ onCreated, onCancel }: { onCreated: (book: Book) => v
   } = useForm<BookFormValues>({
     resolver: zodResolver(bookSchema),
     defaultValues: {
-      title: '',
-      isbn: '',
-      edition: '',
-      publicationYear: '',
-      language: '',
-      description: '',
-      coverUrl: '',
-      publisherId: '',
-      authorIds: [],
-      categoryIds: [],
-      // A obra já nasce com os dois tipos de exemplar que a regra exige.
-      copies: [
-        { ...EMPTY_COPY, kind: 'CONSULTA' },
-        { ...EMPTY_COPY, kind: 'CIRCULANTE' },
-      ],
+      title: book?.title ?? '',
+      isbn: book?.isbn ?? '',
+      edition: book?.edition ?? '',
+      publicationYear: book?.publicationYear?.toString() ?? '',
+      language: book?.language ?? '',
+      description: book?.description ?? '',
+      coverUrl: book?.coverUrl ?? '',
+      publisherId: book?.publisherId?.toString() ?? '',
+      authorIds: book?.authors.map((a) => String(a.id)) ?? [],
+      categoryIds: book?.categories.map((c) => String(c.id)) ?? [],
+      // Nova obra já nasce com os dois tipos de exemplar que a regra exige. Na edição os exemplares
+      // só acompanham o formulário para passar pela mesma validação; não são exibidos nem enviados.
+      copies: book
+        ? book.copies.map((c) => ({ barcode: c.barcode, kind: c.kind, condition: c.condition, location: c.location ?? '' }))
+        : [
+            { ...EMPTY_COPY, kind: 'CONSULTA' },
+            { ...EMPTY_COPY, kind: 'CIRCULANTE' },
+          ],
     },
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'copies' })
 
-  const create = useMutation({
-    mutationFn: (values: BookFormValues) => api<Book>('/books', { method: 'POST', body: toBookRequest(values) }),
-    onSuccess: (book) => {
+  const save = useMutation({
+    mutationFn: (values: BookFormValues) =>
+      book
+        ? api<Book>(`/books/${book.id}`, { method: 'PUT', body: { ...toBookRequest(values), copies: undefined } })
+        : api<Book>('/books', { method: 'POST', body: toBookRequest(values) }),
+    onSuccess: (saved) => {
       void queryClient.invalidateQueries({ queryKey: ['books'] })
-      onCreated(book)
+      void queryClient.invalidateQueries({ queryKey: ['book', saved.id] })
+      onSaved(saved)
     },
     onError: setServerError,
   })
@@ -63,7 +71,7 @@ export function BookForm({ onCreated, onCancel }: { onCreated: (book: Book) => v
     <form
       onSubmit={handleSubmit((v) => {
         setServerError(null)
-        create.mutate(v)
+        save.mutate(v)
       })}
       noValidate
       className="space-y-4"
@@ -122,6 +130,7 @@ export function BookForm({ onCreated, onCancel }: { onCreated: (book: Book) => v
         {(p) => <input {...p} type="url" className={inputClass} {...register('coverUrl')} />}
       </Field>
 
+      {!book && (
       <fieldset className="space-y-3 rounded-md border border-slate-200 p-3">
         <legend className="px-1 text-sm font-semibold">Exemplares</legend>
         <p className="text-xs text-slate-600">
@@ -169,14 +178,15 @@ export function BookForm({ onCreated, onCancel }: { onCreated: (book: Book) => v
           Adicionar exemplar
         </Button>
       </fieldset>
+      )}
 
       <ErrorAlert error={serverError} />
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" loading={create.isPending}>
-          Cadastrar obra
+        <Button type="submit" loading={save.isPending}>
+          {book ? 'Salvar alterações' : 'Cadastrar obra'}
         </Button>
       </div>
     </form>

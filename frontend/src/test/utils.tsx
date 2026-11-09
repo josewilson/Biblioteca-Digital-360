@@ -10,8 +10,8 @@ import type { Role } from '../lib/types'
 const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')
 
 /** JWT de mentira (sem assinatura válida): a interface só lê id, perfis e validade. */
-export function fakeJwt(roles: Role[], { sub = '1', expiresInSec = 3600 } = {}): string {
-  return `${b64({ alg: 'HS256' })}.${b64({ sub, roles, exp: Math.floor(Date.now() / 1000) + expiresInSec })}.assinatura`
+export function fakeJwt(roles: Role[], { sub = '1', expiresInSec = 3600, mustChangePassword = false } = {}): string {
+  return `${b64({ alg: 'HS256' })}.${b64({ sub, roles, mustChangePassword, exp: Math.floor(Date.now() / 1000) + expiresInSec })}.assinatura`
 }
 
 type Handler = (init: RequestInit) => unknown | Response

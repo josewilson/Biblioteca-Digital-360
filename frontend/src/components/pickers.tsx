@@ -1,22 +1,33 @@
-import { useState, type FormEvent } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState, type FormEvent } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { Book, Page, UserRow } from '../lib/types'
 import { Button, Empty, Field, Loading, inputClass, ErrorAlert } from './ui'
 
-const usersQuery = () => ({
-  queryKey: ['users', 'all'],
-  // ponytail: só os 200 primeiros por nome; se a base crescer, trocar por busca no servidor.
-  queryFn: () => api<Page<UserRow>>('/users', { params: { size: 200, sort: 'fullName' } }),
-})
+const PICKER_SIZE = 20
 
-/** Mapa id -> nome para mostrar o leitor em vez de "#7" nas tabelas. */
-export function useUserNames(): (id: number) => string {
-  const { data } = useQuery(usersQuery())
-  const names = new Map((data?.content ?? []).map((u) => [u.id, u.fullName]))
+function useDebounced<T>(value: T, ms = 250): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), ms)
+    return () => clearTimeout(timer)
+  }, [value, ms])
+  return debounced
+}
+
+/** Nomes dos leitores que aparecem na tela (id -> nome), para não mostrar "#7" nas tabelas. */
+export function useUserNames(ids: number[]): (id: number) => string {
+  const unique = [...new Set(ids)].sort((a, b) => a - b)
+  const { data } = useQuery({
+    queryKey: ['users', 'lookup', unique],
+    queryFn: () => api<UserRow[]>('/users/lookup', { params: { ids: unique.join(',') } }),
+    enabled: unique.length > 0,
+  })
+  const names = new Map((data ?? []).map((u) => [u.id, u.fullName]))
   return (id) => names.get(id) ?? `Leitor #${id}`
 }
 
+/** Escolhe um leitor com busca no servidor: funciona igual com 50 ou 50 mil usuários. */
 export function UserSelect({
   value,
   onChange,
@@ -28,10 +39,32 @@ export function UserSelect({
   label?: string
   emptyLabel?: string
 }) {
-  const { data, isLoading, error } = useQuery(usersQuery())
+  const [text, setText] = useState('')
+  const term = useDebounced(text.trim())
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['users', 'search', term],
+    queryFn: () => api<Page<UserRow>>('/users', { params: { q: term, size: PICKER_SIZE, sort: 'fullName' } }),
+    placeholderData: keepPreviousData,
+  })
+  const hidden = (data?.totalElements ?? 0) - (data?.content.length ?? 0)
+
   return (
-    <div className="space-y-2">
-      <Field label={label}>
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Field label={`${label}: buscar por nome, e-mail ou matrícula`}>
+        {(props) => (
+          <input
+            {...props}
+            type="search"
+            className={inputClass}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value)
+              if (value !== null) onChange(null)   // a lista vai mudar: a escolha anterior deixa de estar nela
+            }}
+          />
+        )}
+      </Field>
+      <Field label={label} hint={hidden > 0 ? `Mostrando ${PICKER_SIZE}. Refine a busca para ver os outros ${hidden}.` : undefined}>
         {(props) => (
           <select
             {...props}
@@ -41,28 +74,28 @@ export function UserSelect({
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
           >
             <option value="">{isLoading ? 'Carregando…' : emptyLabel}</option>
-            {(data?.content ?? [])
-              .filter((u) => u.active)
-              .map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.fullName} ({u.email})
-                </option>
-              ))}
+            {(data?.content ?? []).map((u) => (
+              <option key={u.id} value={u.id} disabled={!u.active}>
+                {u.fullName} ({u.email}){u.active ? '' : ' (inativo)'}
+              </option>
+            ))}
           </select>
         )}
       </Field>
-      <ErrorAlert error={error} />
+      <div className="sm:col-span-2">
+        <ErrorAlert error={error} />
+      </div>
     </div>
   )
 }
 
-/** Busca obras pelo título e devolve a escolhida. */
+/** Busca obras (título, autor, ISBN ou código do exemplar) e devolve a escolhida. */
 export function BookPicker({ onPick }: { onPick: (book: Book) => void }) {
   const [text, setText] = useState('')
   const [term, setTerm] = useState('')
   const { data, isFetching, error } = useQuery({
     queryKey: ['books', 'picker', term],
-    queryFn: () => api<Page<Book>>('/books', { params: { title: term, size: 8 } }),
+    queryFn: () => api<Page<Book>>('/books', { params: { q: term, size: 8 } }),
     enabled: term.length >= 2,
   })
 
@@ -76,7 +109,7 @@ export function BookPicker({ onPick }: { onPick: (book: Book) => void }) {
       <form onSubmit={search} className="space-y-1">
         <div className="flex items-end gap-2">
           <div className="flex-1">
-            <Field label="Buscar obra pelo título">
+            <Field label="Buscar obra pelo título, autor, ISBN ou código">
               {(props) => (
                 <input
                   {...props}
@@ -116,7 +149,10 @@ export function BookPicker({ onPick }: { onPick: (book: Book) => void }) {
   )
 }
 
-/** Grupo de caixas de marcar (várias escolhas), acessível por <fieldset>. */
+const LONG_LIST = 12
+const normalize = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
+/** Grupo de caixas de marcar (várias escolhas), acessível por <fieldset>. Lista longa ganha filtro. */
 export function CheckGroup({
   legend,
   options,
@@ -130,6 +166,12 @@ export function CheckGroup({
   onChange: (value: string[]) => void
   error?: string
 }) {
+  const [filter, setFilter] = useState('')
+  const long = options.length > LONG_LIST
+  const wanted = normalize(filter)
+  // O que já foi marcado continua visível, para o filtro não esconder a escolha.
+  const visible = options.filter((o) => value.includes(o.value) || normalize(o.label).includes(wanted))
+
   function toggle(v: string) {
     onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v])
   }
@@ -137,8 +179,18 @@ export function CheckGroup({
     <fieldset className="space-y-1">
       <legend className="text-sm font-medium text-slate-700">{legend}</legend>
       {options.length === 0 && <p className="text-xs text-slate-500">Nenhum item cadastrado ainda.</p>}
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {options.map((o) => (
+      {long && (
+        <input
+          type="search"
+          aria-label={`Filtrar ${legend.toLowerCase()}`}
+          className={inputClass}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+        />
+      )}
+      <div className={`flex flex-wrap gap-x-4 gap-y-1 ${long ? 'max-h-40 overflow-y-auto' : ''}`}>
+        {visible.map((o) => (
           <label key={o.value} className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
             {o.label}

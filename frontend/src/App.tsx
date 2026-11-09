@@ -3,11 +3,13 @@ import { Link, Navigate, RouterProvider, createBrowserRouter, type RouteObject }
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApiError } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
-import { STAFF_ROLES } from './lib/types'
+import { ADMIN_ROLES, STAFF_ROLES } from './lib/types'
 import { Layout, RequireAuth } from './components/Layout'
 import { RequireRole } from './components/RequireRole'
 import { Loading } from './components/ui'
 import { BookDetailPage } from './pages/BookDetailPage'
+import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { PoliciesPage } from './pages/PoliciesPage'
 import { BooksPage } from './pages/BooksPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CounterPage } from './pages/CounterPage'
@@ -55,7 +57,9 @@ export const routes: RouteObject[] = [
           { path: 'relatorios', element: staff(<ReportsPage />) },
           { path: 'usuarios', element: staff(<UsersPage />) },
           { path: 'cadastros', element: staff(<CatalogPage />) },
+          { path: 'regras', element: <RequireRole roles={ADMIN_ROLES}><PoliciesPage /></RequireRole> },
           { path: 'minha-area', element: <MyAreaPage /> },
+          { path: 'minha-senha', element: <ChangePasswordPage /> },
           { path: '*', element: <NotFound /> },
         ],
       },

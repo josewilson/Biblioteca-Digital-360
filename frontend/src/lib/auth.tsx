@@ -7,6 +7,8 @@ export interface AuthUser {
   roles: Role[]
   /** Fim da validade do token, em milissegundos (epoch). */
   expiresAt: number
+  /** Senha temporária: o servidor não dá perfil nenhum até ela ser trocada. */
+  mustChangePassword: boolean
 }
 
 /**
@@ -23,9 +25,14 @@ export function decodeToken(token: string, now: number = Date.now()): AuthUser |
         .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
         .join(''),
     )
-    const claims = JSON.parse(json) as { sub?: string; roles?: Role[]; exp?: number }
+    const claims = JSON.parse(json) as { sub?: string; roles?: Role[]; exp?: number; mustChangePassword?: boolean }
     if (!claims.sub || !claims.exp) return null
-    const user: AuthUser = { id: Number(claims.sub), roles: claims.roles ?? [], expiresAt: claims.exp * 1000 }
+    const user: AuthUser = {
+      id: Number(claims.sub),
+      roles: claims.roles ?? [],
+      expiresAt: claims.exp * 1000,
+      mustChangePassword: claims.mustChangePassword === true,
+    }
     return user.expiresAt > now ? user : null
   } catch {
     return null
@@ -43,6 +50,8 @@ interface AuthContextValue {
   isAdmin: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  /** Assume o token novo devolvido pela troca de senha (o anterior deixa de valer). */
+  adoptToken: (token: string) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -62,14 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { accessToken } = await api<{ accessToken: string }>('/auth/login', {
-      method: 'POST',
-      body: { email, password },
-    })
-    tokenStore.set(accessToken)
-    setUser(decodeToken(accessToken))
+  const adoptToken = useCallback((token: string) => {
+    tokenStore.set(token)
+    setUser(decodeToken(token))
   }, [])
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { accessToken } = await api<{ accessToken: string }>('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+      })
+      adoptToken(accessToken)
+    },
+    [adoptToken],
+  )
 
   // Servidor recusou o token -> sai da sessão. Também sai sozinho quando o token vence.
   useEffect(() => {
@@ -92,8 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: hasAnyRole(user, ADMIN_ROLES),
       login,
       logout,
+      adoptToken,
     }),
-    [user, login, logout],
+    [user, login, logout, adoptToken],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -73,7 +73,7 @@ describe('formulário de obra', () => {
 
   it('recusa obra sem exemplar de consulta, sem chamar o servidor', async () => {
     const { calls } = mockFetch(lookups)
-    renderWithProviders(<BookForm onCreated={vi.fn()} onCancel={vi.fn()} />)
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
     const user = userEvent.setup()
 
     await user.type(screen.getByLabelText('Título'), 'Dom Casmurro')
@@ -89,7 +89,7 @@ describe('formulário de obra', () => {
   it('cadastra com consulta + emprestável e manda o corpo no formato da API', async () => {
     const onCreated = vi.fn()
     const { calls } = mockFetch({ ...lookups, 'POST /api/v1/books': () => domCasmurro })
-    renderWithProviders(<BookForm onCreated={onCreated} onCancel={vi.fn()} />)
+    renderWithProviders(<BookForm onSaved={onCreated} onCancel={vi.fn()} />)
     const user = userEvent.setup()
 
     await user.type(screen.getByLabelText('Título'), 'Dom Casmurro')
@@ -107,7 +107,7 @@ describe('formulário de obra', () => {
 
   it('mostra a recusa do servidor (ex.: código repetido)', async () => {
     mockFetch({ ...lookups, 'POST /api/v1/books': () => problem(422, 'Já existe exemplar com um desses códigos.') })
-    renderWithProviders(<BookForm onCreated={vi.fn()} onCancel={vi.fn()} />)
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
     const user = userEvent.setup()
 
     await user.type(screen.getByLabelText('Título'), 'Dom Casmurro')
@@ -123,6 +123,7 @@ describe('balcão', () => {
   function openCounter(extra: Parameters<typeof mockFetch>[0] = {}) {
     return mockFetch({
       'GET /api/v1/users': () => page([ana]),
+      'GET /api/v1/users/lookup': () => [ana],
       'GET /api/v1/loans': () => page([]),
       'GET /api/v1/books': () => page([domCasmurro]),
       ...extra,
@@ -132,7 +133,7 @@ describe('balcão', () => {
   async function pickReaderAndCopy(user: ReturnType<typeof userEvent.setup>) {
     await screen.findAllByRole('option', { name: /Ana Souza/ })   // uma lista no formulário e outra no filtro
     await user.selectOptions(screen.getByLabelText('Leitor'), '7')
-    await user.type(screen.getByLabelText('Buscar obra pelo título'), 'dom')
+    await user.type(screen.getByLabelText('Buscar obra pelo título, autor, ISBN ou código'), 'dom')
     await user.click(screen.getByRole('button', { name: 'Buscar' }))
     await user.click(await screen.findByRole('button', { name: 'Escolher' }))
   }
@@ -210,6 +211,7 @@ describe('multas', () => {
   const fine = { id: 5, loanId: 90, userId: 7, amount: 3, daysLate: 3, status: 'ABERTA', waiverReason: null }
   const handlers = () => ({
     'GET /api/v1/users': () => page([ana]),
+      'GET /api/v1/users/lookup': () => [ana],
     'GET /api/v1/fines': () => page([fine]),
   })
 

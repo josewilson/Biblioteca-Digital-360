@@ -89,7 +89,6 @@ function NewLoan() {
 
 function ActiveLoans() {
   const queryClient = useQueryClient()
-  const userName = useUserNames()
   const [page, setPage] = useState(0)
   const [filterUser, setFilterUser] = useState<number | null>(null)
   const [returning, setReturning] = useState<Loan | null>(null)
@@ -99,6 +98,7 @@ function ActiveLoans() {
     queryKey: ['loans', 'active', filterUser, page],
     queryFn: () => api<Page<Loan>>('/loans', { params: { activeOnly: true, userId: filterUser, page, size: 10, sort: 'dueAt,asc' } }),
   })
+  const userName = useUserNames((loans.data?.content ?? []).map((l) => l.userId))
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['loans'] })
@@ -121,7 +121,7 @@ function ActiveLoans() {
 
   return (
     <Card title="Empréstimos em andamento">
-      <div className="mb-4 max-w-md">
+      <div className="mb-4 max-w-3xl">
         <UserSelect
           label="Filtrar por leitor"
           emptyLabel="Todos os leitores"

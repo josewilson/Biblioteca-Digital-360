@@ -31,7 +31,7 @@ test('menu: começa recolhido, abre, navega e fecha sozinho', async ({ page }) =
 
 test('nenhuma tela principal rola na horizontal no celular', async ({ page }) => {
   await uiLogin(page, ADMIN.email, ADMIN.password)
-  for (const path of ['/painel', '/acervo', '/balcao', '/reservas', '/multas', '/relatorios', '/usuarios', '/cadastros', '/minha-area']) {
+  for (const path of ['/painel', '/acervo', '/balcao', '/reservas', '/multas', '/relatorios', '/usuarios', '/cadastros', '/regras', '/minha-area', '/minha-senha']) {
     await page.goto(path)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await noHorizontalOverflow(page)
