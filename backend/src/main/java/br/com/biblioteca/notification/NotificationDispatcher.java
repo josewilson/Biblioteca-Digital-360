@@ -9,13 +9,15 @@ import org.springframework.stereotype.Component;
 
 /**
  * Entrega os avisos pendentes (tabela notifications) pelo canal configurado, fora de qualquer transação de negócio.
- * Falha de entrega não perde o aviso: conta a tentativa e tenta de novo, até {@value #MAX_ATTEMPTS} vezes.
+ * Os que nunca falharam vão primeiro: aviso ruim não segura os demais. Falha de entrega não perde o aviso: conta a tentativa e tenta de novo, até {@value #MAX_ATTEMPTS} vezes.
  */
 @Component
 public class NotificationDispatcher {
 
     static final int MAX_ATTEMPTS = 5;
     private static final int BATCH = 50;
+    /** Falhas seguidas que indicam canal fora do ar (e não um aviso ruim): para a rodada e tenta na próxima. */
+    private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
     private static final Map<String, String> SUBJECTS = Map.of(
             "LOAN_CONFIRMED", "Empréstimo confirmado",
@@ -45,20 +47,25 @@ public class NotificationDispatcher {
                 select n.id, u.email, n.type, n.message
                 from notifications n join users u on u.id = n.user_id
                 where n.sent_at is null and n.attempts < ?
-                order by n.id limit ?""",
+                order by n.attempts, n.id limit ?""",
                 (rs, i) -> new Pending(rs.getLong("id"), rs.getString("email"), rs.getString("type"),
                         rs.getString("message")),
                 MAX_ATTEMPTS, BATCH);
 
         int delivered = 0;
+        int consecutiveFailures = 0;
         for (Pending p : pending) {
             try {
                 channel.send(p.email(), SUBJECTS.getOrDefault(p.type(), "Biblioteca Digital 360"), p.message());
                 jdbc.update("update notifications set sent_at = now() where id = ? and sent_at is null", p.id());
                 delivered++;
+                consecutiveFailures = 0;
             } catch (RuntimeException e) {
                 jdbc.update("update notifications set attempts = attempts + 1, last_error = left(?, 300) where id = ?",
                         e.getClass().getSimpleName() + ": " + e.getMessage(), p.id());
+                if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                    break;
+                }
             }
         }
         return delivered;

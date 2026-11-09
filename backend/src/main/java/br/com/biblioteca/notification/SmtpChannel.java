@@ -17,7 +17,20 @@ class SmtpChannel implements NotificationChannel {
     private final JavaMailSender mailSender;
     private final String from;
 
-    SmtpChannel(JavaMailSender mailSender, @Value("${app.notifications.from}") String from) {
+    SmtpChannel(JavaMailSender mailSender,
+                @Value("${app.notifications.from:}") String from,
+                @Value("${spring.mail.host:}") String host,
+                @Value("${spring.mail.username:}") String username,
+                @Value("${app.notifications.smtp.auth:true}") boolean auth) {
+        if (host.isBlank() || from.isBlank()) {
+            throw new IllegalStateException(
+                    "Canal smtp ligado, mas faltam SPRING_MAIL_HOST e APP_NOTIFICATIONS_FROM. Preencha-os ou use APP_NOTIFICATIONS_CHANNEL=log.");
+        }
+        if (auth && username.isBlank()) {
+            throw new IllegalStateException(
+                    "Canal smtp com autenticação ligada, mas sem SPRING_MAIL_USERNAME/SPRING_MAIL_PASSWORD. "
+                            + "Preencha-os ou, num servidor sem senha, use MAIL_SMTP_AUTH=false.");
+        }
         this.mailSender = mailSender;
         this.from = from;
     }

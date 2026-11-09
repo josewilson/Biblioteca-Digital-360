@@ -28,7 +28,17 @@ O nginx passa a confiar no `X-Forwarded-For` do Caddy (só da rede interna do co
 Testado com `DOMAIN=localhost` (certificado interno do Caddy): HTTPS, HSTS e redirecionamento de http. **Não testado com domínio público e Let's Encrypt.** Se preferir outro proxy (Traefik, balanceador da nuvem), ele precisa enviar HSTS e `X-Forwarded-For`, e o `deploy/real-ip-proxy.conf` deve listar a rede dele.
 
 ## E-mail
-Por padrão os avisos só vão para o log. Para enviar de verdade: `APP_NOTIFICATIONS_CHANNEL=smtp`, `APP_NOTIFICATIONS_FROM` e `SPRING_MAIL_HOST/PORT/USERNAME/PASSWORD` no `.env`. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
+Por padrão os avisos só vão para o log. Para enviar de verdade, no `.env`:
+```
+APP_NOTIFICATIONS_CHANNEL=smtp
+APP_NOTIFICATIONS_FROM=biblioteca@sua-escola.com.br   # remetente aprovado pelo provedor
+SPRING_MAIL_HOST=smtp.seu-provedor.com
+SPRING_MAIL_PORT=587          # 587 + STARTTLS (padrão); para a 465 use também MAIL_SMTP_SSL=true e MAIL_SMTP_STARTTLS=false
+SPRING_MAIL_USERNAME=...
+SPRING_MAIL_PASSWORD=...
+```
+Servidor local sem senha (teste): `MAIL_SMTP_AUTH=false` e `MAIL_SMTP_STARTTLS=false`. O backend **recusa subir** com o canal `smtp` sem host, remetente ou (com autenticação ligada) usuário, para o erro aparecer na hora e não aviso a aviso. Conexão e leitura têm tempo limite (5 s e 10 s): provedor fora do ar não trava o sistema, e depois de 3 falhas seguidas a rodada de envio para e retoma no minuto seguinte.
+**Confira com o provedor de verdade**, logado como administrador: `POST /api/v1/notifications/test` manda um e-mail de teste para o seu endereço e devolve o canal ligado (`log` não envia nada) ou o motivo do erro. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
 
 ## Dados e backup
 O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um dump por dia em `/backups` (volume `backups`) e apaga os com mais de `BACKUP_KEEP_DAYS` dias (padrão 14). O primeiro dump sai logo ao subir e pode estar vazio se o backend ainda não tiver migrado o banco; o seguinte já vem completo.

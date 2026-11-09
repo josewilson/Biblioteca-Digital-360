@@ -176,6 +176,38 @@ class NotificacoesFluxoTest {
     }
 
     @Test
+    void administradorTestaOEnvioDeEmailEQuemNaoEAdministradorNaoPode() throws Exception {
+        int before = canal.sent.size();
+        send("/api/v1/notifications/test", "")
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.to").value("admin@teste.com"));
+        assertEquals(before + 1, canal.sent.size());
+        assertEquals("admin@teste.com", canal.sent.get(canal.sent.size() - 1)[0]);
+
+        String email = "leitor" + seq.incrementAndGet() + "@teste.com";
+        student(email);
+        String reader = "Bearer " + read(mvc.perform(post("/api/v1/auth/login").contentType(JSON)
+                .content("{\"email\":\"%s\",\"password\":\"senha-leitor-1\"}".formatted(email)))).get("accessToken").asText();
+        mvc.perform(post("/api/v1/notifications/test").header("Authorization", reader)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void canalForaDoArParaARodadaAposTresFalhasSeguidas() throws Exception {
+        jdbc.update("update notifications set attempts = 5 where sent_at is null");   // isola dos outros testes
+        long ana = student("fora" + seq.incrementAndGet() + "@teste.com");
+        for (int i = 0; i < 5; i++) {
+            jdbc.update("insert into notifications (user_id, type, message) values (?, 'FINE_REGISTERED', 'FALHAR ' || ?)", ana, i);
+        }
+
+        dispatcher.dispatchPending();
+
+        // só as 3 primeiras foram tentadas; as outras 2 esperam a próxima rodada, sem gastar tentativa
+        assertEquals(3, jdbc.queryForObject("select count(*) from notifications where user_id = ? and attempts = 1", Integer.class, ana));
+        assertEquals(2, jdbc.queryForObject("select count(*) from notifications where user_id = ? and attempts = 0", Integer.class, ana));
+        jdbc.update("delete from notifications where user_id = ?", ana);
+    }
+
+    @Test
     void avisoDeVencimentoEAtrasoSaemUmaVezPorEmprestimo() throws Exception {
         long ana = student("prazo" + seq.incrementAndGet() + "@teste.com");
         lendNewBook(ana, "Iracema");                           // prazo padrão: 14 dias
