@@ -17,4 +17,4 @@ Pontos de atenção:
 - V4 prazo e renovação em `loan_limits` (`loan_days`, `max_renewals`, `renewal_days`; padrões 14, 2, 7).
 - V5 `reservations.copy_id` (exemplar guardado) + índice único, `loan_limits.reservation_pickup_days` (padrão 3) e multa de funcionário em `fine_rates` (R$ 1,00/dia, assumido).
 - V6 `notifications.attempts`, `last_error` e `dedup_key` (UNIQUE) para controle de entrega e aviso único.
-- V7 índice parcial de falhas de login (bloqueio por força bruta). V8 índices de desempenho (períodos, ativos por vencimento, renovações, reservas por leitor).
+- V7 índice parcial de falhas de login (bloqueio por força bruta). V8 índices de desempenho (períodos, ativos por vencimento, renovações, reservas por leitor). V9 sessão e senha temporária (`users.token_version`, `must_change_password`), busca sem acento (`pg_trgm`, `unaccent`, função `f_unaccent`, índices GIN em título, autor, nome, e-mail e matrícula) e índices de ordenação e de chaves estrangeiras.

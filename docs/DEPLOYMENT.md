@@ -37,7 +37,7 @@ Restaurar: `gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U bi
 **Faça backup antes de cada atualização.** Não há rotina automática de backup.
 
 ## Atualizar
-`git pull` e `docker compose --profile full up -d --build`. As migrações do banco (Flyway) rodam sozinhas ao iniciar o backend. Migrações já aplicadas nunca devem ser editadas.
+`git pull` e `docker compose --profile full up -d --build`. As migrações do banco (Flyway) rodam sozinhas ao iniciar o backend. A V9 cria as extensões `pg_trgm` e `unaccent`: o usuário do banco precisa ser dono dele (é o caso no compose). Depois dela, todos precisam entrar de novo. Migrações já aplicadas nunca devem ser editadas.
 
 ## Verificar
 - `docker compose --profile full ps` (colunas de saúde: healthy).
@@ -46,7 +46,6 @@ Restaurar: `gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U bi
 
 ## Restrições conhecidas
 - **Uma instância só do backend.** A entrega de avisos e a expiração de reservas rodam em tarefas agendadas sem trava entre instâncias; duas instâncias poderiam enviar o mesmo aviso duas vezes.
-- Revogar acesso: não há lista de tokens revogados; um usuário desativado mantém o acesso até o token vencer (60 min por padrão, `JWT_TTL_MINUTES`).
 - Sem limite de requisições por IP no nginx (só o bloqueio de login por e-mail do backend).
 - Sem monitoramento nem métricas além de `/actuator/health`; sem OpenTelemetry.
 - Recursos dos containers sem limite definido (defina `mem_limit` conforme o servidor).
@@ -57,4 +56,4 @@ Restaurar: `gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U bi
 - [ ] HTTPS na frente do nginx, com HSTS
 - [ ] Porta do banco não exposta (o compose já publica só em 127.0.0.1)
 - [ ] Backup testado (restauração feita ao menos uma vez)
-- [ ] Senha do administrador trocada por uma que só você conhece
+- [ ] Senha do administrador trocada em "Minha senha" por uma que só você conhece

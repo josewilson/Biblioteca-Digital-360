@@ -15,7 +15,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-142%20backend%20%C2%B7%2055%20frontend%20%C2%B7%2026%20E2E-2ea44f)
+![Testes](https://img.shields.io/badge/testes-150%20backend%20%C2%B7%2061%20frontend%20%C2%B7%2027%20E2E-2ea44f)
 ![Acessibilidade](https://img.shields.io/badge/acessibilidade-axe%20no%20CI-5a2d82)
 
 </div>
@@ -256,9 +256,9 @@ Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-ma
 
 ## Testes e qualidade
 ```bash
-cd backend && ./mvnw verify                                 # backend: 142 testes (com PostgreSQL real via Testcontainers)
-cd frontend && npm test                         # frontend: 55 testes
-cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 26 testes de ponta a ponta + axe
+cd backend && ./mvnw verify                                 # backend: 150 testes (com PostgreSQL real via Testcontainers)
+cd frontend && npm test                         # frontend: 61 testes
+cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 27 testes de ponta a ponta + axe
 ```
 O CI roda três jobs: **backend**, **frontend** (tipos, testes, build e `npm audit`) e **ponta a ponta** (pilha completa em
 Docker, navegador real e auditoria de acessibilidade em desktop e celular). Há regressão automática contra consultas N+1.
@@ -288,6 +288,6 @@ ambiente · containers sem root · banco publicado apenas em `127.0.0.1`. Revis�
 | [AGENTS.md](AGENTS.md) | Convenções para contribuir (pessoas e IA) |
 
 ## Limitações conhecidas
-Não existem ainda: OpenAPI/Swagger, recuperação de senha, HTTPS embutido (use um proxy com certificado), edição e
-exclusão de obra, envio de imagem de capa, revogação de token e teste de carga. Entrega de avisos pressupõe **uma única
+Não existem ainda: OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido (use um proxy com certificado),
+exclusão de obra, envio de imagem de capa e teste de carga. Entrega de avisos pressupõe **uma única
 instância** do backend. SMTP real não foi testado contra um servidor de e-mail. Lista completa no [roadmap](docs/ROADMAP.md).

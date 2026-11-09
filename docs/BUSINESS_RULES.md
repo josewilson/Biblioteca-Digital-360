@@ -8,10 +8,10 @@ Status: **definidas**; só as marcadas (banco) já são impostas pelo código at
 | Toda obra tem ≥ 1 exemplar `CONSULTA` e ≥ 1 `CIRCULANTE` | **aplicação** (`BookService.create`, testado) |
 | Não se dá baixa/perda no único exemplar de consulta ativo (cadastre outro antes) | **aplicação** (`BookService.changeStatus`, testado) |
 | Exemplar `CONSULTA` nunca é emprestado | **banco** (FK composta + CHECK) |
-| Todos os leitores usam o exemplar de consulta no local; visitante não empresta | aplicação (Fase 5) — pendente |
+| Todos os leitores usam o exemplar de consulta no local; visitante não empresta | **aplicação** (perfil sem linha em `loan_limits` não empresta; a tela de regras não cria essa linha) |
 | Exemplar não tem dois empréstimos ativos | **banco** (índice único parcial) |
-| Limite de empréstimos por usuário, prazos e renovação | configuráveis; aplicação (Fase 5) — pendente |
-| Multa por dia de atraso, configurável, em reais | `fine_rates` (valores iniciais: aluno 1,00, professor 0,50, visitante 2,00); cálculo na Fase 5 |
+| Limite de empréstimos por usuário, prazos e renovação | configuráveis em "Regras de empréstimo" (administradores); valem para os próximos empréstimos e renovações |
+| Multa por dia de atraso, configurável, em reais | `fine_rates` (valores iniciais: aluno 1,00, professor 0,50, visitante 2,00), editável em "Regras de empréstimo"; usa o valor em vigor no dia da devolução |
 | Uma multa por empréstimo; um pagamento por multa | **banco** (UNIQUE) |
 | Isenção exige justificativa e responsável | **banco** (CHECK) |
 | Fila de reservas por ordem cronológica | esquema (`queued_at`); lógica na Fase 5 |

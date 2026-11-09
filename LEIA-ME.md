@@ -18,7 +18,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
 - Código **legado** da aula (Cap 04): `Livro`, `Leitor`, `Biblioteca`, `CalculadoraDeMulta`, com 11 testes. Será substituído aos poucos.
 
-**Ainda não existe:** OpenAPI/Swagger, recuperação de senha, HTTPS embutido (precisa de proxy com certificado), edição/exclusão de obra e envio de imagem de capa.
+**Ainda não existe:** OpenAPI/Swagger, recuperação de senha por e-mail (a equipe redefine pela tela de usuários), HTTPS embutido (precisa de proxy com certificado), exclusão de obra e envio de imagem de capa.
 
 ## Tecnologias
 Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
