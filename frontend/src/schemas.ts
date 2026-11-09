@@ -8,6 +8,9 @@ export const loginSchema = z.object({
 })
 export type LoginForm = z.infer<typeof loginSchema>
 
+export const forgotSchema = z.object({ email: z.string().trim().min(1, 'Informe o e-mail.').email('E-mail inválido.') })
+export type ForgotForm = z.infer<typeof forgotSchema>
+
 export const nameSchema = z.object({
   name: z.string().trim().min(1, 'Informe o nome.').max(150, 'No máximo 150 caracteres.'),
 })
@@ -69,6 +72,11 @@ const newPassword = z.string().min(8, 'A senha precisa de pelo menos 8 caractere
 
 export const resetPasswordSchema = z.object({ newPassword })
 export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>
+
+export const newPasswordSchema = z
+  .object({ newPassword, confirmation: z.string() })
+  .refine((v) => v.newPassword === v.confirmation, { path: ['confirmation'], message: 'As senhas não são iguais.' })
+export type NewPasswordForm = z.infer<typeof newPasswordSchema>
 
 export const changePasswordSchema = z
   .object({

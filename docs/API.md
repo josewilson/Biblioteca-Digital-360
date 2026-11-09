@@ -6,6 +6,8 @@ Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
 | Método e caminho | Quem | O que faz |
 |---|---|---|
 | `POST /auth/login` | público | devolve o token |
+| `POST /auth/forgot` | público | pede o link de redefinição por e-mail (`email`); **204 sempre**, exista a conta ou não |
+| `POST /auth/reset` | público | define a senha nova com o token do e-mail (`token`, `newPassword`); 204, ou 422 se o link for inválido, expirado ou já usado |
 | `POST /auth/password` | autenticado | troca a própria senha (`currentPassword`, `newPassword`) e devolve token novo; os anteriores caem |
 | `POST/GET /users?q=`, `GET /users/{id}` | equipe | cadastra / lista ou busca por nome (sem acento), e-mail, matrícula / consulta |
 | `GET /users/lookup?ids=1,2` | equipe | vários usuários por id (máx. 100) |

@@ -17,6 +17,7 @@ import { CounterPage } from './pages/CounterPage'
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 import { FinesPage } from './pages/FinesPage'
 import { LoginPage } from './pages/LoginPage'
+import { ForgotPasswordPage, ResetPasswordPage } from './pages/RecoverPasswordPage'
 import { MyAreaPage } from './pages/MyAreaPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { ReservationsPage } from './pages/ReservationsPage'
@@ -42,6 +43,8 @@ const staff = (element: React.ReactNode) => <RequireRole roles={STAFF_ROLES}>{el
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
+  { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
+  { path: '/redefinir-senha', element: <ResetPasswordPage /> },
   { path: '/privacidade', element: <PrivacyPage /> },
   {
     element: <RequireAuth />,

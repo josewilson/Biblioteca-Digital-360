@@ -26,7 +26,8 @@ public class NotificationDispatcher {
             "RESERVATION_AVAILABLE", "Sua reserva está disponível",
             "RESERVATION_EXPIRED", "Sua reserva expirou",
             "FINE_REGISTERED", "Multa registrada",
-            "PAYMENT_CONFIRMED", "Pagamento confirmado");
+            "PAYMENT_CONFIRMED", "Pagamento confirmado",
+            "PASSWORD_RESET", "Redefinição de senha");
 
     private record Pending(long id, String email, String type, String message) {
     }
@@ -57,7 +58,11 @@ public class NotificationDispatcher {
         for (Pending p : pending) {
             try {
                 channel.send(p.email(), SUBJECTS.getOrDefault(p.type(), "Biblioteca Digital 360"), p.message());
-                jdbc.update("update notifications set sent_at = now() where id = ? and sent_at is null", p.id());
+                // o link de redefinição é um segredo: depois de enviado, não fica guardado
+                jdbc.update("""
+                        update notifications set sent_at = now(),
+                          message = case when type = 'PASSWORD_RESET' then 'Link de redefinição enviado.' else message end
+                        where id = ? and sent_at is null""", p.id());
                 delivered++;
                 consecutiveFailures = 0;
             } catch (RuntimeException e) {

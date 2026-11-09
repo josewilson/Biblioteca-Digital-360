@@ -219,3 +219,55 @@ describe('contato de privacidade e e-mail de teste', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('MailAuthenticationException')
   })
 })
+
+describe('recuperação de senha', () => {
+  it('"Esqueci a senha" pede o link e mostra a mesma confirmação sempre', async () => {
+    const { calls } = mockFetch({ 'POST /api/v1/auth/forgot': () => new Response(null, { status: 204 }) })
+    renderApp('/login')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('link', { name: 'Esqueci a senha' }))
+    await user.type(await screen.findByLabelText('E-mail'), 'leitor@escola.test')
+    await user.click(screen.getByRole('button', { name: 'Enviar link' }))
+
+    expect(await screen.findByText(/Se este e-mail tiver conta, o link já foi enviado/)).toBeInTheDocument()
+    expect(JSON.parse(String(calls.find((c) => c.key === 'POST /api/v1/auth/forgot')!.init.body))).toEqual({ email: 'leitor@escola.test' })
+  })
+
+  it('o link do e-mail define a senha nova com o token e confere a repetição', async () => {
+    const { calls } = mockFetch({ 'POST /api/v1/auth/reset': () => new Response(null, { status: 204 }) })
+    renderApp('/redefinir-senha?token=abc123')
+    const user = userEvent.setup()
+
+    await user.type(await screen.findByLabelText('Nova senha'), 'senha-nova-1')
+    await user.type(screen.getByLabelText('Repita a nova senha'), 'diferente-1')
+    await user.click(screen.getByRole('button', { name: 'Salvar senha nova' }))
+    expect(await screen.findByText('As senhas não são iguais.')).toBeInTheDocument()
+    expect(calls.some((c) => c.key === 'POST /api/v1/auth/reset')).toBe(false)
+
+    await user.clear(screen.getByLabelText('Repita a nova senha'))
+    await user.type(screen.getByLabelText('Repita a nova senha'), 'senha-nova-1')
+    await user.click(screen.getByRole('button', { name: 'Salvar senha nova' }))
+
+    expect(await screen.findByText(/Senha alterada/)).toBeInTheDocument()
+    expect(JSON.parse(String(calls.find((c) => c.key === 'POST /api/v1/auth/reset')!.init.body))).toEqual({
+      token: 'abc123',
+      newPassword: 'senha-nova-1',
+    })
+  })
+
+  it('link vencido mostra a mensagem do servidor e sem token pede um novo', async () => {
+    mockFetch({ 'POST /api/v1/auth/reset': () => problem(422, 'Link inválido ou expirado. Peça um novo na tela de entrada.') })
+    const { unmount } = renderApp('/redefinir-senha?token=velho')
+    const user = userEvent.setup()
+
+    await user.type(await screen.findByLabelText('Nova senha'), 'senha-nova-1')
+    await user.type(screen.getByLabelText('Repita a nova senha'), 'senha-nova-1')
+    await user.click(screen.getByRole('button', { name: 'Salvar senha nova' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Link inválido ou expirado')
+    unmount()
+
+    renderApp('/redefinir-senha')
+    expect(await screen.findByText(/Link incompleto/)).toBeInTheDocument()
+  })
+})
