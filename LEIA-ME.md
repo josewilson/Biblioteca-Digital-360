@@ -16,7 +16,6 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Reservas com fila (exemplar guardado para o 1º, prazo de retirada, expiração), pagamento de multa com comprovante e isenção autorizada com justificativa.
 - Painel gerencial e 8 relatórios (JSON ou CSV) para a equipe; avisos por e-mail (canal configurável) para empréstimo, vencimento, atraso, reserva, multa e pagamento.
 - Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
-- Código **legado** da aula (Cap 04): `Livro`, `Leitor`, `Biblioteca`, `CalculadoraDeMulta`, com 11 testes. Será substituído aos poucos.
 
 **Ainda não existe:** OpenAPI/Swagger, recuperação de senha por e-mail (a equipe redefine pela tela de usuários), HTTPS embutido no site (existe um proxy opcional, `docker-compose.tls.yml`, ainda não testado com domínio público), exclusão de obra e envio de imagem de capa.
 
@@ -45,8 +44,6 @@ A aplicação **não lê o `.env` sozinha** (só o `docker compose` lê): inform
 
 Pelo IntelliJ: abra `BibliotecaApplication`, defina `DB_PASSWORD` e `JWT_SECRET` (e `ADMIN_EMAIL`/`ADMIN_PASSWORD` no primeiro start) e rode.
 Pelo terminal (Windows PowerShell): `$env:DB_PASSWORD="sua-senha"; $env:JWT_SECRET="texto-com-32-ou-mais-caracteres"; cd backend; .\mvnw.cmd spring-boot:run`
-
-Programa de exemplo do legado: `App.java`.
 
 ## Aplicação completa em Docker
 Banco, backend e site juntos, com um só comando (detalhes, HTTPS e backup em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)):

@@ -38,7 +38,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 - [Limitações conhecidas](#limitações-conhecidas)
 
 ## Visão geral
-O projeto nasceu como um exercício de aula ("Biblioteca do Bairro", SOLID) e foi reconstruído como um sistema de
+O projeto nasceu como um exercício de aula ("Biblioteca do Bairro", SOLID, código já removido) e foi reconstruído como um sistema de
 biblioteca completo: API REST em Spring Boot sobre PostgreSQL e uma interface web em React, entregues em containers e
 verificadas por um pipeline de CI com testes de unidade, de integração com banco real e de ponta a ponta com
 auditoria de acessibilidade.
@@ -198,8 +198,7 @@ Biblioteca-Digital-360/
 │   │   ├── user/ security/          usuários, perfis, login JWT, bloqueio por tentativas
 │   │   ├── notification/            fila de avisos, canais log/smtp, vencimento e atraso
 │   │   ├── report/                  painel e relatórios (SQL de leitura, CSV)
-│   │   ├── audit/ shared/           auditoria, erros (ProblemDetail), relógio, validações
-│   │   └── (raiz)                   código legado da aula, a ser removido
+│   │   └── audit/ shared/           auditoria, erros (ProblemDetail), relógio, validações
 │   ├── src/main/resources/
 │   │   ├── application.yml          configuração por variáveis de ambiente
 │   │   └── db/migration/            Flyway V1–V8

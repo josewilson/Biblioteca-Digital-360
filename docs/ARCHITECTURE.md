@@ -17,7 +17,6 @@ navegador ──(JWT)──► /api/v1 (Spring MVC) ──► serviços ──�
 | `report` | painel e relatórios (SQL de leitura), CSV |
 | `notification` | avisos: gravação, entrega por canal (`log`/`smtp`), vencimento e atraso |
 | `audit`, `shared` | auditoria, tratamento de erros, relógio, agendamento |
-| (raiz) | código **legado** da aula (Cap 04), a ser removido |
 
 Camadas: controller → service (transação e regra) → repository/entidade. DTOs são `record`. Erros viram HTTP só em `GlobalExceptionHandler`.
 
