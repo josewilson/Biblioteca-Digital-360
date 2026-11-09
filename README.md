@@ -15,7 +15,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-151%20backend%20%C2%B7%2065%20frontend%20%C2%B7%2029%20E2E-2ea44f)
+![Testes](https://img.shields.io/badge/testes-140%20backend%20%C2%B7%2065%20frontend%20%C2%B7%2029%20E2E-2ea44f)
 ![Acessibilidade](https://img.shields.io/badge/acessibilidade-axe%20no%20CI-5a2d82)
 
 </div>
@@ -38,7 +38,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 - [Limitações conhecidas](#limitações-conhecidas)
 
 ## Visão geral
-O projeto nasceu como um exercício de aula ("Biblioteca do Bairro", SOLID) e foi reconstruído como um sistema de
+O projeto nasceu como um exercício de aula ("Biblioteca do Bairro", SOLID, código já removido) e foi reconstruído como um sistema de
 biblioteca completo: API REST em Spring Boot sobre PostgreSQL e uma interface web em React, entregues em containers e
 verificadas por um pipeline de CI com testes de unidade, de integração com banco real e de ponta a ponta com
 auditoria de acessibilidade.
@@ -198,8 +198,7 @@ Biblioteca-Digital-360/
 │   │   ├── user/ security/          usuários, perfis, login JWT, bloqueio por tentativas
 │   │   ├── notification/            fila de avisos, canais log/smtp, vencimento e atraso
 │   │   ├── report/                  painel e relatórios (SQL de leitura, CSV)
-│   │   ├── audit/ shared/           auditoria, erros (ProblemDetail), relógio, validações
-│   │   └── (raiz)                   código legado da aula, a ser removido
+│   │   └── audit/ shared/           auditoria, erros (ProblemDetail), relógio, validações
 │   ├── src/main/resources/
 │   │   ├── application.yml          configuração por variáveis de ambiente
 │   │   └── db/migration/            Flyway V1–V8
@@ -256,7 +255,7 @@ Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-ma
 
 ## Testes e qualidade
 ```bash
-cd backend && ./mvnw verify                                 # backend: 151 testes (com PostgreSQL real via Testcontainers)
+cd backend && ./mvnw verify                                 # backend: 140 testes (com PostgreSQL real via Testcontainers)
 cd frontend && npm test                         # frontend: 65 testes
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 29 testes de ponta a ponta + axe
 ```

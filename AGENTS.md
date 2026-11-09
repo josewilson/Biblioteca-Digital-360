@@ -6,7 +6,7 @@
 ## 1. Identidade
 Biblioteca Digital 360: Sistema Integrado de Gestão Bibliotecária (SIGB) para instituições de ensino.
 Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula "Biblioteca do Bairro" (Cap 04, SOLID),
-que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
+cujo código foi **removido** depois de substituído pelos módulos atuais (continua no histórico do Git, antes do commit que o apagou).
 
 ## 2. Estado real (atualize ao concluir cada fase)
 - **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: LGPD (exportar e anonimizar dados, `/privacidade`), troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
@@ -24,8 +24,6 @@ backend/src/main/java/br/com/biblioteca/
   BibliotecaApplication.java   ponto de entrada Spring
   shared/error/                exceções e GlobalExceptionHandler
   acervo/ user/ security/ audit/ loan/ notification/ report/ shared/   módulos implementados (loan = circulação; report = painel e relatórios)
-  (legado) Livro, Leitor, Biblioteca, CalculadoraDeMulta, App ...   substituir por módulos
-  <módulo>/                    futuro: acervo, usuario, emprestimo, reserva, multa, ...
 backend/src/main/resources/db/migration/   Vnn__descricao.sql
 docs/                              documentação complementar
 frontend/                          aplicação React (src/lib = API/auth/formatação, src/components, src/pages, src/schemas.ts)
@@ -34,7 +32,6 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 
 ## 5. Convenções
 - Código novo, tabelas e colunas: **inglês** (como no esquema). Mensagens ao usuário e documentação: **português**.
-  O legado continua em português até sair.
 - Classes `PascalCase`, métodos `camelCase`, tabelas `snake_case` no plural.
 - Dinheiro: **reais com 2 casas** (`BigDecimal` no Java, `numeric(10,2)` no banco), por decisão do usuário. Nunca `double`/`float`.
 - Datas: `Instant`/`timestamptz`.
@@ -76,7 +73,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 ## 13. Commits e manutenção
 - Commits pequenos, no imperativo, em português: `feat(multa): calcula multa configurável`. Tipos: feat, fix, refactor, docs, test, chore.
 - Ao mudar comportamento, atualize `LEIA-ME.md` e `docs/` no mesmo trabalho.
-- Preserve o que funciona; não apague classe do legado sem substituta testada.
+- Preserve o que funciona; não apague classe sem substituta testada.
 - Antes de relatar: liste arquivos criados/alterados/removidos, dependências novas e pendências.
 
 ## 14. Domínio (regras fixas — detalhes em `docs/BUSINESS_RULES.md`)
@@ -86,7 +83,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - Um exemplar não tem dois empréstimos ativos; só exemplar `CIRCULANTE` é emprestável (o banco garante).
 - Multa: por dia de atraso, valor **configurável** (`fine_rates.daily_rate`), em reais. Padrões iniciais: aluno 1,00, professor 0,50, visitante 2,00.
 - Uma multa por empréstimo e um pagamento por multa (sem cobrança duplicada).
-- Com multa, o leitor é avisado. `EmailSmtp` (legado) simula envio e demora 2 s.
+- Com multa, o leitor é avisado (tabela `notifications`, entregue pelo canal `log` ou `smtp`).
 
 ## 15. Frontend (`frontend/`)
 - **Autorização é do servidor.** A interface esconde menus e botões por perfil só por conveniência (`RequireRole`, `useAuth`); nunca trate isso como proteção. O JWT é lido apenas para id, perfis e validade.
