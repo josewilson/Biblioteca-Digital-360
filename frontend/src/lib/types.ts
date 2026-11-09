@@ -74,6 +74,7 @@ export interface Book {
   language: string | null
   description: string | null
   coverUrl: string | null
+  coverVersion: number | null   // não nulo = há capa enviada (ver components/BookCover.tsx)
   publisherId: number | null
   publisher: string | null
   authors: NameItem[]

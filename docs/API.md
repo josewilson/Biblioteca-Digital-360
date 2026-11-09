@@ -34,7 +34,8 @@ Exemplo de cadastro de obra:
 {"title":"Dom Casmurro","isbn":"9788535910663","publicationYear":1899,"publisherId":1,"authorIds":[1],"categoryIds":[1],
  "copies":[{"barcode":"DC-1","kind":"CONSULTA","location":"Estante A"},{"barcode":"DC-2","kind":"CIRCULANTE","condition":"NOVO"}]}
 ```
-Pendente: capa por upload (hoje só `coverUrl`), excluir obra, OpenAPI/Swagger. Tamanho máximo de página: 100. Conflito de unicidade em gravações simultâneas responde 409.
+**Capa:** `PUT /books/{id}/cover` (equipe, `multipart/form-data`, campo `file`, JPEG ou PNG até 2 MB e 8000 px de lado) e `DELETE /books/{id}/cover` (equipe) devolvem a obra com `coverVersion` (nulo = sem capa enviada). `GET /books/{id}/cover?size=thumb|full&v=<coverVersion>` é **público** (a tag `<img>` não envia token) e devolve JPEG com cache longo; 404 se não há capa. O servidor regrava a imagem em JPEG (full até 600x900, miniatura até 160x240): o arquivo enviado nunca é guardado nem servido como veio. `coverUrl` (endereço externo) continua valendo quando não há capa enviada.
+Pendente: excluir obra, OpenAPI/Swagger. Tamanho máximo de página: 100. Conflito de unicidade em gravações simultâneas responde 409.
 
 ## Balcão (Fase 5, parte 1)
 | Método e caminho | Quem | O que faz |

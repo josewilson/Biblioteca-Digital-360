@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Book } from './lib/types'
 import { BookForm } from './components/BookForm'
 import { mockFetch, page, problem, renderApp, renderWithProviders } from './test/utils'
 
@@ -7,7 +8,7 @@ const ana = { id: 7, fullName: 'Ana Souza', email: 'ana@x.com', registration: nu
 
 const domCasmurro = {
   id: 1, title: 'Dom Casmurro', isbn: null, edition: null, publicationYear: 1899, language: null, description: null,
-  coverUrl: null, publisher: null, authors: [{ id: 1, name: 'Machado de Assis' }], categories: [],
+  coverUrl: null, coverVersion: null, publisher: null, authors: [{ id: 1, name: 'Machado de Assis' }], categories: [],
   copies: [
     { id: 11, barcode: 'C-1', kind: 'CONSULTA', status: 'DISPONIVEL', condition: 'BOM', location: null },
     { id: 12, barcode: 'E-1', kind: 'CIRCULANTE', status: 'DISPONIVEL', condition: 'BOM', location: null },
@@ -285,5 +286,108 @@ describe('acervo para o leitor', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirmar' }))
 
     expect(await screen.findByText(/único exemplar de consulta/)).toBeInTheDocument()
+  })
+})
+
+describe('capa da obra', () => {
+  const lookups = {
+    'GET /api/v1/authors': () => [{ id: 1, name: 'Machado de Assis' }],
+    'GET /api/v1/publishers': () => [],
+    'GET /api/v1/categories': () => [],
+  }
+  const png = (name = 'capa.png', size = 1000) => new File([new Uint8Array(size)], name, { type: 'image/png' })
+
+  async function fillRequired(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText('Título'), 'Dom Casmurro')
+    await user.type(screen.getByLabelText('Código do exemplar 1'), 'C-1')
+    await user.type(screen.getByLabelText('Código do exemplar 2'), 'E-1')
+  }
+
+  it('cadastra a obra e envia a capa escolhida em seguida, como arquivo', async () => {
+    const onCreated = vi.fn()
+    const withCover = { ...domCasmurro, coverVersion: 123 }
+    const { calls } = mockFetch({
+      ...lookups,
+      'POST /api/v1/books': () => domCasmurro,
+      'PUT /api/v1/books/1/cover': () => withCover,
+    })
+    renderWithProviders(<BookForm onSaved={onCreated} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await fillRequired(user)
+    await user.upload(screen.getByLabelText('Capa da obra'), png())
+    expect(await screen.findByAltText('Prévia da capa escolhida')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cadastrar obra' }))
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith(withCover))
+    const upload = calls.find((c) => c.key === 'PUT /api/v1/books/1/cover')!
+    expect(upload.init.body).toBeInstanceOf(FormData)
+    expect((upload.init.body as FormData).get('file')).toBeInstanceOf(File)
+    expect((upload.init.headers as Record<string, string>)['Content-Type']).toBeUndefined()   // o navegador põe o limite do multipart
+  })
+
+  it('recusa arquivo que não é JPEG/PNG ou passa de 2 MB, sem chamar o servidor', async () => {
+    const { calls } = mockFetch(lookups)
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup({ applyAccept: false })
+
+    await user.upload(screen.getByLabelText('Capa da obra'), new File(['x'], 'capa.gif', { type: 'image/gif' }))
+    expect(await screen.findByText('Use uma imagem JPEG ou PNG.')).toBeInTheDocument()
+    await user.upload(screen.getByLabelText('Capa da obra'), png('grande.png', 2 * 1024 * 1024 + 1))
+    expect(await screen.findByText('A imagem passa de 2 MB.')).toBeInTheDocument()
+    expect(calls.some((c) => c.key.includes('/cover'))).toBe(false)
+  })
+
+  it('se o envio da capa falhar, a obra já existe: avisa e, ao tentar de novo, não cadastra de novo', async () => {
+    let attempt = 0
+    const { calls } = mockFetch({
+      ...lookups,
+      'POST /api/v1/books': () => domCasmurro,
+      'PUT /api/v1/books/1/cover': () => (++attempt === 1 ? problem(422, 'Envie uma imagem JPEG ou PNG válida.') : { ...domCasmurro, coverVersion: 9 }),
+    })
+    const onCreated = vi.fn()
+    renderWithProviders(<BookForm onSaved={onCreated} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await fillRequired(user)
+    await user.upload(screen.getByLabelText('Capa da obra'), png())
+    await user.click(screen.getByRole('button', { name: 'Cadastrar obra' }))
+    expect(await screen.findByText(/A obra foi cadastrada, mas a capa não foi enviada/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cadastrar obra' }))
+    await waitFor(() => expect(onCreated).toHaveBeenCalledOnce())
+    expect(calls.filter((c) => c.key === 'POST /api/v1/books')).toHaveLength(1)
+  })
+
+  it('na edição, mostra a capa atual e permite removê-la', async () => {
+    const book = { ...domCasmurro, coverVersion: 5, publisherId: null } as unknown as Book
+    const { calls } = mockFetch({
+      ...lookups,
+      'PUT /api/v1/books/1': () => book,
+      'DELETE /api/v1/books/1/cover': () => ({ ...book, coverVersion: null }),
+    })
+    const onSaved = vi.fn()
+    renderWithProviders(<BookForm book={book} onSaved={onSaved} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    expect(document.querySelector('img')?.getAttribute('src')).toBe('/api/v1/books/1/cover?size=thumb&v=5')
+    await user.click(screen.getByLabelText('Remover a capa enviada'))
+    await user.click(screen.getByRole('button', { name: 'Salvar alterações' }))
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce())
+    expect(calls.some((c) => c.key === 'DELETE /api/v1/books/1/cover')).toBe(true)
+  })
+
+  it('no acervo, mostra a miniatura enviada e a capa padrão para quem não tem', async () => {
+    mockFetch({
+      'GET /api/v1/books': () => page([{ ...domCasmurro, coverVersion: 7 }, { ...domCasmurro, id: 2, title: 'Sem capa' }]),
+    })
+    renderApp('/acervo', ['LIBRARIAN'])
+
+    expect(await screen.findByText('Sem capa')).toBeInTheDocument()
+    const imgs = document.querySelectorAll('table img')
+    expect(imgs).toHaveLength(1)
+    expect(imgs[0]!.getAttribute('src')).toBe('/api/v1/books/1/cover?size=thumb&v=7')
+    expect(imgs[0]!.getAttribute('alt')).toBe('')   // decorativa: o título está ao lado
   })
 })

@@ -55,7 +55,7 @@ describe('senha', () => {
 describe('edição', () => {
   const book = {
     id: 1, title: 'Dom Casmuro', isbn: null, edition: null, publicationYear: 1899, language: null, description: null,
-    coverUrl: null, publisherId: 3, publisher: 'Garnier', authors: [{ id: 2, name: 'Machado' }], categories: [],
+    coverUrl: null, coverVersion: null, publisherId: 3, publisher: 'Garnier', authors: [{ id: 2, name: 'Machado' }], categories: [],
     copies: [
       { id: 10, barcode: 'C-1', kind: 'CONSULTA', status: 'DISPONIVEL', condition: 'BOM', location: null },
       { id: 11, barcode: 'E-1', kind: 'CIRCULANTE', status: 'DISPONIVEL', condition: 'BOM', location: null },

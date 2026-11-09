@@ -3,9 +3,9 @@
 - [x] Fase 1 — Diagnóstico, AGENTS.md, LEIA-ME.md
 - [x] Fase 2 — Fundação: Spring Boot, Flyway V1, erros, testes. (Pendente: Dockerfile da aplicação, CI, OpenAPI)
 - [x] Fase 3 — Segurança e usuários (JWT, perfis, cadastro). Pendentes em docs/SECURITY.md
-- [x] Fase 4 — Acervo (obras, exemplares, autores, editoras, categorias). Pendentes: upload de capa, edição/exclusão de obra
+- [x] Fase 4 — Acervo (obras, exemplares, autores, editoras, categorias). Pendentes: exclusão de obra, busca de capa por ISBN
 - [x] Fase 5 — Empréstimo, devolução, renovação, reservas, multa, pagamento e isenção
-- [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendentes: OpenAPI/Swagger, edição/exclusão de obra, upload de capa
+- [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendentes: OpenAPI/Swagger, exclusão de obra
 - [x] Fase 7 — Segurança, desempenho, Docker, E2E (Playwright + axe), CI/Dependabot. **Pendentes:** HTTPS/HSTS (proxy com certificado, opcional no compose), teste com leitor de tela. Teste de carga feito no passo 8 (`loadtest/`)
 - [x] Pré-produção, passo 1 — Troca e redefinição de senha, senha temporária, revogação imediata de sessão, edição de obra/exemplar/usuário/cadastros, reativação de usuário, regras de empréstimo pela tela, busca sem acento (índices trigram, V9), seletores com busca no servidor
 - [x] Pré-produção, passo 2 — Dependências: nginx 1.29; Dependabot não propõe mais Spring Boot de versão maior nem a imagem do Maven (o projeto fica no Java 21). Spring Boot 4.1.2 migrado no passo 7 (o PR do Dependabot falhava no CI)
@@ -15,5 +15,6 @@
 - [x] Pré-produção, passo 6 — Código legado da aula removido
 - [x] Pré-produção, passo 7 — Spring Boot 4.1.2 (Hibernate 7, Spring Security 7, Jackson 3, Testcontainers 2) e SMTP endurecido: tempos limite, autenticação/STARTTLS por variável, recusa de subir mal configurado, rodada de envio para após 3 falhas, `POST /notifications/test`
 - [x] Pré-produção, passo 8 — Teste de carga com k6 (`loadtest/`): 50 usuários simultâneos p95 270 ms, sem erros; saturação ~80 req/s numa instância (ver `docs/PERFORMANCE.md`)
+- [x] Capa da obra por envio de imagem no cadastro e na edição, com miniatura no acervo e capa padrão. Próximo: botão "Buscar capa pelo ISBN" (Open Library), reaproveitando o mesmo caminho
 - [x] Pré-produção, passo 9 — Cópia dos backups para fora do servidor (rclone, ligada por `BACKUP_REMOTE`), contato de privacidade por `PRIVACY_CONTACT` e botão "Enviar e-mail de teste" na tela do administrador
 - [ ] Pré-produção, o que depende de decisão sua: provedor de SMTP (rodar o e-mail de teste com ele), destino da cópia dos backups fora do servidor, domínio para o HTTPS com Let's Encrypt, revisão jurídica do texto de privacidade, alertas

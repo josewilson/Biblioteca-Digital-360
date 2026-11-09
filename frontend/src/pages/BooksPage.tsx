@@ -5,6 +5,7 @@ import { Plus, Search } from 'lucide-react'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import type { Book, Page } from '../lib/types'
+import { BookCover } from '../components/BookCover'
 import { BookForm } from '../components/BookForm'
 import {
   Button,
@@ -86,9 +87,12 @@ export function BooksPage() {
                 {data.content.map((b) => (
                   <tr key={b.id}>
                     <td className={cellClass}>
-                      <Link to={`/acervo/${b.id}`} className="font-serif font-medium text-brand-700 underline">
-                        {b.title}
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <BookCover book={b} size="thumb" decorative />
+                        <Link to={`/acervo/${b.id}`} className="font-serif font-medium text-brand-700 underline">
+                          {b.title}
+                        </Link>
+                      </div>
                     </td>
                     <td className={cellClass}>{b.authors.map((a) => a.name).join(', ') || '—'}</td>
                     <td className={cellClass}>{b.categories.map((c) => c.name).join(', ') || '—'}</td>

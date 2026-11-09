@@ -4,13 +4,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public record BookResponse(Long id, String title, String isbn, String edition, Short publicationYear,
-                           String language, String description, String coverUrl, Long publisherId, String publisher,
+                           String language, String description, String coverUrl, Long coverVersion, Long publisherId, String publisher,
                            List<NameResponse> authors, List<NameResponse> categories,
                            List<CopyResponse> copies) {
 
     static BookResponse from(Book b) {
         return new BookResponse(b.getId(), b.getTitle(), b.getIsbn(), b.getEdition(), b.getPublicationYear(),
-                b.getLanguage(), b.getDescription(), b.getCoverUrl(),
+                b.getLanguage(), b.getDescription(), b.getCoverUrl(), b.getCoverVersion(),
                 b.getPublisher() == null ? null : b.getPublisher().getId(),
                 b.getPublisher() == null ? null : b.getPublisher().getName(),
                 b.getAuthors().stream().map(a -> new NameResponse(a.getId(), a.getName()))
