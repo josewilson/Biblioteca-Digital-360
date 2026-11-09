@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -31,8 +31,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import br.com.biblioteca.notification.DueDateNotifier;
 import br.com.biblioteca.notification.NotificationChannel;
@@ -173,6 +173,38 @@ class NotificacoesFluxoTest {
     /** O limite de tentativas é detalhe interno do despachante; o teste só precisa saber que é finito (5). */
     private static final class NotificationDispatcherLimite {
         static final int MAX = 5;
+    }
+
+    @Test
+    void administradorTestaOEnvioDeEmailEQuemNaoEAdministradorNaoPode() throws Exception {
+        int before = canal.sent.size();
+        send("/api/v1/notifications/test", "")
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.to").value("admin@teste.com"));
+        assertEquals(before + 1, canal.sent.size());
+        assertEquals("admin@teste.com", canal.sent.get(canal.sent.size() - 1)[0]);
+
+        String email = "leitor" + seq.incrementAndGet() + "@teste.com";
+        student(email);
+        String reader = "Bearer " + read(mvc.perform(post("/api/v1/auth/login").contentType(JSON)
+                .content("{\"email\":\"%s\",\"password\":\"senha-leitor-1\"}".formatted(email)))).get("accessToken").asText();
+        mvc.perform(post("/api/v1/notifications/test").header("Authorization", reader)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void canalForaDoArParaARodadaAposTresFalhasSeguidas() throws Exception {
+        jdbc.update("update notifications set attempts = 5 where sent_at is null");   // isola dos outros testes
+        long ana = student("fora" + seq.incrementAndGet() + "@teste.com");
+        for (int i = 0; i < 5; i++) {
+            jdbc.update("insert into notifications (user_id, type, message) values (?, 'FINE_REGISTERED', 'FALHAR ' || ?)", ana, i);
+        }
+
+        dispatcher.dispatchPending();
+
+        // só as 3 primeiras foram tentadas; as outras 2 esperam a próxima rodada, sem gastar tentativa
+        assertEquals(3, jdbc.queryForObject("select count(*) from notifications where user_id = ? and attempts = 1", Integer.class, ana));
+        assertEquals(2, jdbc.queryForObject("select count(*) from notifications where user_id = ? and attempts = 0", Integer.class, ana));
+        jdbc.update("delete from notifications where user_id = ?", ana);
     }
 
     @Test

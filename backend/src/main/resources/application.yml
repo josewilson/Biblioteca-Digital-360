@@ -11,6 +11,17 @@ spring:
       ddl-auto: validate       # o esquema é só das migrações Flyway
   flyway:
     enabled: true
+  mail:
+    properties:
+      # Sem tempo limite o JavaMail espera para sempre: uma conexão pendurada travaria a entrega dos avisos e o agendador.
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.timeout]": 10000
+      "[mail.smtp.writetimeout]": 10000
+      # Provedores de verdade pedem login e STARTTLS (porta 587) ou SSL direto (porta 465, MAIL_SMTP_SSL=true).
+      # Servidor local sem senha: MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false.
+      "[mail.smtp.auth]": ${app.notifications.smtp.auth}
+      "[mail.smtp.starttls.enable]": ${MAIL_SMTP_STARTTLS:true}
+      "[mail.smtp.ssl.enable]": ${MAIL_SMTP_SSL:false}
   data:
     web:
       pageable:
@@ -28,6 +39,9 @@ management:
       enabled: false
 
 app:
+  notifications:
+    smtp:
+      auth: ${MAIL_SMTP_AUTH:true}
   jwt:
     secret: ${JWT_SECRET}          # obrigatório, mínimo 32 caracteres; sem padrão
     ttl-minutes: ${JWT_TTL_MINUTES:60}

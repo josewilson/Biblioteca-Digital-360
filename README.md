@@ -8,14 +8,14 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 
 [![CI](https://github.com/josewilson/Biblioteca-Digital-360/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josewilson/Biblioteca-Digital-360/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Flyway](https://img.shields.io/badge/Flyway-migrations-CC0200?logo=flyway&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-140%20backend%20%C2%B7%2065%20frontend%20%C2%B7%2029%20E2E-2ea44f)
+![Testes](https://img.shields.io/badge/testes-143%20backend%20%C2%B7%2065%20frontend%20%C2%B7%2029%20E2E-2ea44f)
 ![Acessibilidade](https://img.shields.io/badge/acessibilidade-axe%20no%20CI-5a2d82)
 
 </div>
@@ -223,7 +223,7 @@ Biblioteca-Digital-360/
 ## Tecnologias
 | Camada | Stack |
 |---|---|
-| Backend | Java 21 · Spring Boot 3.5 (Web, Validation, Data JPA, Security + OAuth2 Resource Server, Actuator, Mail) · Flyway · Maven |
+| Backend | Java 21 · Spring Boot 4.1 (Web MVC, Validation, Data JPA, Security + OAuth2 Resource Server, Actuator, Mail) · Flyway · Maven |
 | Banco | PostgreSQL 16 |
 | Frontend | React 19 · TypeScript 7 (strict) · Vite 8 · React Router 8 · TanStack Query 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · Recharts 3 · Lucide |
 | Testes | JUnit 5 · Mockito · Testcontainers · Vitest + Testing Library · Playwright + axe-core |
@@ -255,7 +255,7 @@ Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-ma
 
 ## Testes e qualidade
 ```bash
-cd backend && ./mvnw verify                                 # backend: 140 testes (com PostgreSQL real via Testcontainers)
+cd backend && ./mvnw verify                                 # backend: 143 testes (com PostgreSQL real via Testcontainers)
 cd frontend && npm test                         # frontend: 65 testes
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 29 testes de ponta a ponta + axe
 ```

@@ -50,6 +50,9 @@ services:
       SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}           # false só em servidor local sem senha
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}   # porta 587
+      MAIL_SMTP_SSL: ${MAIL_SMTP_SSL:-false}            # true na porta 465
     depends_on:
       postgres:
         condition: service_healthy

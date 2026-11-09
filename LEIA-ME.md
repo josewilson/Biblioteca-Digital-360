@@ -20,7 +20,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 **Ainda não existe:** OpenAPI/Swagger, recuperação de senha por e-mail (a equipe redefine pela tela de usuários), HTTPS embutido no site (existe um proxy opcional, `docker-compose.tls.yml`, ainda não testado com domínio público), exclusão de obra e envio de imagem de capa.
 
 ## Tecnologias
-Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
+Backend: Java 21 · Spring Boot 4.1.2 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
 Frontend: React 19 · TypeScript 7 (strict) · Vite 8 · React Router 8 · TanStack Query 5 · React Hook Form + Zod 4 · Tailwind CSS 4 · Recharts 3 · Lucide · Vitest 5 + Testing Library. Versões exatas em `backend/pom.xml` e `frontend/package.json`.
 
 ## Pré-requisitos

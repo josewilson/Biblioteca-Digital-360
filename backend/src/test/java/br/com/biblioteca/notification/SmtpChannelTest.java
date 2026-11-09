@@ -11,7 +11,7 @@ import java.net.http.HttpResponse;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
+import org.springframework.boot.mail.autoconfigure.MailSenderAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,8 +19,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * O canal SMTP contra um servidor SMTP de verdade (Mailpit, em container), com o {@link JavaMailSender} montado pela
@@ -51,7 +51,7 @@ class SmtpChannelTest {
     @Test
     void entregaOAvisoComAcentosAoServidorSmtp() throws Exception {
         runner(MAILPIT.getMappedPort(1025)).run(ctx -> {
-            SmtpChannel channel = new SmtpChannel(ctx.getBean(JavaMailSender.class), "biblioteca@escola.test");
+            SmtpChannel channel = new SmtpChannel(ctx.getBean(JavaMailSender.class), "biblioteca@escola.test", MAILPIT.getHost(), "", false);
 
             channel.send("ana@leitor.test", "Empréstimo confirmado", "Devolução até 20/11/2026: \"Dom Casmurro\" — não esqueça.");
         });
@@ -64,10 +64,21 @@ class SmtpChannelTest {
     }
 
     @Test
+    void recusaSubirSemServidorOuRemetenteOuSemLoginQuandoAutenticacaoEstaLigada() {
+        JavaMailSender sender = org.mockito.Mockito.mock(JavaMailSender.class);
+
+        assertThrows(IllegalStateException.class, () -> new SmtpChannel(sender, "biblioteca@escola.test", "", "", false));
+        assertThrows(IllegalStateException.class, () -> new SmtpChannel(sender, "", "smtp.provedor.test", "", false));
+        assertThrows(IllegalStateException.class, () -> new SmtpChannel(sender, "biblioteca@escola.test", "smtp.provedor.test", "", true));
+        new SmtpChannel(sender, "biblioteca@escola.test", "smtp.provedor.test", "usuario", true);   // completo: sobe
+        new SmtpChannel(sender, "biblioteca@escola.test", "localhost", "", false);                   // servidor local sem senha
+    }
+
+    @Test
     void servidorForaDoArFalhaComExcecaoParaOAvisoFicarPendente() {
         // porta sem ninguém ouvindo: o despachante conta a tentativa e tenta de novo (NotificationDispatcher)
         runner(1).run(ctx -> {
-            SmtpChannel channel = new SmtpChannel(ctx.getBean(JavaMailSender.class), "biblioteca@escola.test");
+            SmtpChannel channel = new SmtpChannel(ctx.getBean(JavaMailSender.class), "biblioteca@escola.test", MAILPIT.getHost(), "", false);
             assertThrows(MailException.class, () -> channel.send("ana@leitor.test", "Assunto", "Corpo"));
         });
     }
