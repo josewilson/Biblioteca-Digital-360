@@ -62,6 +62,14 @@ public class BookCopy {
         this.book = book;
     }
 
+    void update(String barcode, CopyCondition condition, String location) {
+        this.barcode = barcode;
+        if (condition != null) {
+            this.condition = condition;
+        }
+        this.location = location;
+    }
+
     void setStatus(CopyStatus status) {
         this.status = status;
     }

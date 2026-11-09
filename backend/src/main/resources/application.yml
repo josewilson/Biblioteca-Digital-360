@@ -11,6 +11,10 @@ spring:
       ddl-auto: validate       # o esquema é só das migrações Flyway
   flyway:
     enabled: true
+  data:
+    web:
+      pageable:
+        max-page-size: 100     # ninguém pede a tabela inteira de uma vez
 
 management:
   endpoints:

@@ -2,6 +2,7 @@ package br.com.biblioteca.shared.error;
 
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +32,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TooManyAttemptsException.class)
     public ProblemDetail tooManyAttempts(TooManyAttemptsException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
+    }
+
+    /** Corrida entre duas gravações: quem chega depois esbarra na unicidade do banco. Nunca expõe o SQL. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail conflict(DataIntegrityViolationException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Já existe um registro com estes dados.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

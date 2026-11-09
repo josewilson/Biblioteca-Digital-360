@@ -100,7 +100,11 @@ class ReservaMultaFluxoTest {
         long id = read(send(admin, "/api/v1/users", """
                 {"fullName":"Pessoa %d","email":"%s","password":"%s","roles":["%s"]}"""
                 .formatted(n, email, PASSWORD, role)).andExpect(status().isCreated())).get("id").asLong();
-        return new Person(id, email, login(email, PASSWORD));
+        // Senha inicial é temporária: a equipe só ganha os perfis depois de trocá-la.
+        String token = "Bearer " + read(send(login(email, PASSWORD), "/api/v1/auth/password", """
+                {"currentPassword":"%s","newPassword":"%s"}""".formatted(PASSWORD, PASSWORD + "-nova"))
+                .andExpect(status().isOk())).get("accessToken").asText();
+        return new Person(id, email, token);
     }
 
     /** Obra com 1 exemplar de consulta e 1 emprestável; devolve {bookId, circulatingCopyId}. */

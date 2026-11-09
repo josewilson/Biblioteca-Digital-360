@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.biblioteca.audit.AuditService;
+import br.com.biblioteca.shared.SearchText;
 import br.com.biblioteca.shared.error.BusinessRuleException;
 import br.com.biblioteca.shared.error.ResourceNotFoundException;
 
@@ -52,18 +53,37 @@ public class BookService {
         }
 
         Book book = new Book(req.title().trim());
-        book.describe(isbn, req.edition(), req.publicationYear(), req.language(), req.description(), req.coverUrl());
-        if (req.publisherId() != null) {
-            book.setPublisher(publishers.findById(req.publisherId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Editora inexistente.")));
-        }
-        book.setAuthors(new HashSet<>(findAll(authors, req.authorIds(), "Autor")));
-        book.setCategories(new HashSet<>(findAll(categories, req.categoryIds(), "Categoria")));
+        applyDetails(book, req, isbn);
         req.copies().forEach(c -> book.addCopy(toCopy(c)));
 
         books.save(book);
         audit.record(callerId, "BOOK_CREATED", "book", book.getId(), "exemplares=" + req.copies().size(), ip);
         return BookResponse.from(book);
+    }
+
+    @Transactional
+    public BookResponse update(Long id, UpdateBookRequest req, Long callerId, String ip) {
+        Book book = findBook(id);
+        String isbn = blankToNull(req.isbn());
+        if (isbn != null && books.existsByIsbnAndIdNot(isbn, id)) {
+            throw new BusinessRuleException("Já existe obra com este ISBN.");
+        }
+        book.setTitle(req.title().trim());
+        applyDetails(book, req, isbn);
+        audit.record(callerId, "BOOK_UPDATED", "book", id, null, ip);
+        return BookResponse.from(book);
+    }
+
+    @Transactional
+    public CopyResponse updateCopy(Long copyId, UpdateCopyRequest req, Long callerId, String ip) {
+        BookCopy copy = findCopy(copyId);
+        String barcode = req.barcode().trim();
+        if (copies.existsByBarcodeAndIdNot(barcode, copyId)) {
+            throw new BusinessRuleException("Já existe exemplar com este código.");
+        }
+        copy.update(barcode, req.condition(), blankToNull(req.location()));
+        audit.record(callerId, "COPY_UPDATED", "book_copy", copyId, null, ip);
+        return CopyResponse.from(copy);
     }
 
     @Transactional
@@ -82,8 +102,7 @@ public class BookService {
 
     @Transactional
     public CopyResponse changeStatus(Long copyId, CopyStatus status, Long callerId, String ip) {
-        BookCopy copy = copies.findById(copyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Exemplar " + copyId + " não existe."));
+        BookCopy copy = findCopy(copyId);
         if (!MANUAL_STATUSES.contains(status)) {
             throw new BusinessRuleException("Este estado só muda por empréstimo ou reserva.");
         }
@@ -106,16 +125,28 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
-    public Page<BookResponse> search(String title, Pageable pageable) {
-        Page<Book> page = (title == null || title.isBlank())
+    public Page<BookResponse> search(String query, Pageable pageable) {
+        Page<Book> page = (query == null || query.isBlank())
                 ? books.findAll(pageable)
-                : books.findByTitleContainingIgnoreCase(title.trim(), pageable);
+                : books.search(SearchText.contains(query), query.trim(), pageable);
         return page.map(BookResponse::from);
     }
 
     @Transactional(readOnly = true)
     public BookResponse get(Long id) {
         return BookResponse.from(findBook(id));
+    }
+
+    private void applyDetails(Book book, BookDetails d, String isbn) {
+        book.describe(isbn, d.edition(), d.publicationYear(), d.language(), d.description(), d.coverUrl());
+        book.setPublisher(d.publisherId() == null ? null : publishers.findById(d.publisherId())
+                .orElseThrow(() -> new ResourceNotFoundException("Editora inexistente.")));
+        book.setAuthors(new HashSet<>(findAll(authors, d.authorIds(), "Autor")));
+        book.setCategories(new HashSet<>(findAll(categories, d.categoryIds(), "Categoria")));
+    }
+
+    private BookCopy findCopy(Long id) {
+        return copies.findById(id).orElseThrow(() -> new ResourceNotFoundException("Exemplar " + id + " não existe."));
     }
 
     private Book findBook(Long id) {

@@ -34,6 +34,15 @@ class FineRate {
         this.dailyRate = dailyRate;
     }
 
+    FineRate(Long roleId, BigDecimal dailyRate) {
+        this.roleId = roleId;
+        this.dailyRate = dailyRate;
+    }
+
+    void setDailyRate(BigDecimal dailyRate) {
+        this.dailyRate = dailyRate;
+    }
+
     BigDecimal getDailyRate() {
         return dailyRate;
     }

@@ -22,6 +22,10 @@ public class Author {
         this.name = name;
     }
 
+    void rename(String name) {
+        this.name = name;
+    }
+
     public Long getId() {
         return id;
     }

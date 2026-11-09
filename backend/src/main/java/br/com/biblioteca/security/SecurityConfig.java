@@ -1,6 +1,7 @@
 package br.com.biblioteca.security;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -55,8 +56,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**", "/api/v1/authors",
                                 "/api/v1/publishers", "/api/v1/categories").authenticated()
                         .requestMatchers("/api/v1/fines/*/waive").hasAnyRole(Access.WAIVER_ROLES)
-                        .requestMatchers("/api/v1/books/**", "/api/v1/copies/**", "/api/v1/authors",
-                                "/api/v1/publishers", "/api/v1/categories", "/api/v1/users/**", "/api/v1/loans/**",
+                        .requestMatchers("/api/v1/policies/**").hasAnyRole(Access.ADMIN_ROLES)
+                        .requestMatchers("/api/v1/books/**", "/api/v1/copies/**", "/api/v1/authors/**",
+                                "/api/v1/publishers/**", "/api/v1/categories/**", "/api/v1/users/**", "/api/v1/loans/**",
                                 "/api/v1/reservations/**", "/api/v1/fines/**", "/api/v1/payments/**", "/api/v1/dashboard", "/api/v1/reports/**")
                         .hasAnyRole(Access.STAFF_ROLES)
                         .anyRequest().authenticated())
@@ -69,7 +71,9 @@ public class SecurityConfig {
         authorities.setAuthoritiesClaimName("roles");
         authorities.setAuthorityPrefix("ROLE_");
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authorities);
+        // Senha temporária: sem perfil nenhum até o dono trocá-la (a equipe conhece essa senha).
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> Boolean.TRUE.equals(jwt.getClaimAsBoolean(JwtService.CLAIM_MUST_CHANGE_PASSWORD))
+                ? List.of() : authorities.convert(jwt));
         return converter;
     }
 

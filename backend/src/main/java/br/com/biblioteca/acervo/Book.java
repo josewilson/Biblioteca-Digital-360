@@ -82,6 +82,10 @@ public class Book {
         this.coverUrl = coverUrl;
     }
 
+    void setTitle(String title) {
+        this.title = title;
+    }
+
     void setPublisher(Publisher publisher) {
         this.publisher = publisher;
     }

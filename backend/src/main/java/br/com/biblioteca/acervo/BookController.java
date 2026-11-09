@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,8 +41,22 @@ public class BookController {
     }
 
     @GetMapping("/books")
-    public Page<BookResponse> search(@RequestParam(required = false) String title, Pageable pageable) {
-        return service.search(title, pageable);
+    public Page<BookResponse> search(@RequestParam(required = false) String q, Pageable pageable) {
+        return service.search(q, pageable);
+    }
+
+    @PutMapping("/books/{id}")
+    @PreAuthorize(Access.STAFF)
+    public BookResponse update(@PathVariable Long id, @Valid @RequestBody UpdateBookRequest request,
+                               Authentication auth, HttpServletRequest http) {
+        return service.update(id, request, Long.valueOf(auth.getName()), http.getRemoteAddr());
+    }
+
+    @PutMapping("/copies/{id}")
+    @PreAuthorize(Access.STAFF)
+    public CopyResponse updateCopy(@PathVariable Long id, @Valid @RequestBody UpdateCopyRequest request,
+                                   Authentication auth, HttpServletRequest http) {
+        return service.updateCopy(id, request, Long.valueOf(auth.getName()), http.getRemoteAddr());
     }
 
     @GetMapping("/books/{id}")

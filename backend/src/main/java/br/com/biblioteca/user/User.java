@@ -32,6 +32,8 @@ public class User {
     private String phone;
     private String address;
     private boolean active = true;
+    private boolean mustChangePassword;
+    private int tokenVersion;
     private Instant deletedAt;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
@@ -65,6 +67,33 @@ public class User {
     public void deactivate() {
         active = false;
         deletedAt = Instant.now();
+    }
+
+    public void reactivate() {
+        active = true;
+        deletedAt = null;
+    }
+
+    /** Troca a senha e derruba as sessões abertas com a senha anterior. */
+    public void changePassword(String newHash, boolean mustChangeNext) {
+        passwordHash = newHash;
+        mustChangePassword = mustChangeNext;
+        tokenVersion++;
+    }
+
+    public void requirePasswordChange() {
+        mustChangePassword = true;
+    }
+
+    public void rename(String fullName, String email) {
+        this.fullName = fullName;
+        this.email = email;
+    }
+
+    /** Os perfis vão no token: mudá-los derruba as sessões abertas, que carregariam os antigos. */
+    public void replaceRoles(Set<Role> roles) {
+        this.roles = roles;
+        tokenVersion++;
     }
 
     public void setCpf(String cpf) {
@@ -105,6 +134,14 @@ public class User {
 
     public String getPhone() {
         return phone;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
     }
 
     public boolean isActive() {
