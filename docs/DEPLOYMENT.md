@@ -28,6 +28,7 @@ O nginx passa a confiar no `X-Forwarded-For` do Caddy (só da rede interna do co
 Testado com `DOMAIN=localhost` (certificado interno do Caddy): HTTPS, HSTS e redirecionamento de http. **Não testado com domínio público e Let's Encrypt.** Se preferir outro proxy (Traefik, balanceador da nuvem), ele precisa enviar HSTS e `X-Forwarded-For`, e o `deploy/real-ip-proxy.conf` deve listar a rede dele.
 
 ## E-mail
+**Recuperação de senha:** o link do e-mail "Esqueci a senha" usa `APP_PUBLIC_URL` (padrão `http://localhost:3000`). Em produção, defina o endereço real, por exemplo `APP_PUBLIC_URL=https://biblioteca.sua-escola.com.br`. Sem SMTP configurado (canal `log`) o link só aparece no log do backend.
 Por padrão os avisos só vão para o log. Para enviar de verdade, no `.env`:
 ```
 APP_NOTIFICATIONS_CHANNEL=smtp
@@ -80,6 +81,7 @@ O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um du
 - [ ] HTTPS ligado (`docker-compose.tls.yml`) e `WEB_BIND=127.0.0.1`
 - [ ] `BACKUP_REMOTE` preenchido (cópia externa) e `scripts/restore-test.sh` aprovado
 - [ ] `PRIVACY_CONTACT` preenchido e o texto de `/privacidade` revisado por quem responde juridicamente pela instituição
+- [ ] `APP_PUBLIC_URL` com o endereço real e "Esqueci a senha" testado de ponta a ponta (pedir o link, receber, trocar a senha)
 - [ ] E-mail conferido: botão "Enviar e-mail de teste" em Regras de empréstimo (administrador) recebeu a mensagem
 - [ ] Monitor externo apontado para `https://SEU-DOMINIO/healthz`
 - [ ] Porta do banco não exposta (o compose já publica só em 127.0.0.1)

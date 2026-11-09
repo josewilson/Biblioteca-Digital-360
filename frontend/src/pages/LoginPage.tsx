@@ -57,6 +57,11 @@ export function LoginPage() {
           Entrar
         </Button>
         <p className="text-center text-sm">
+          <Link to="/esqueci-senha" className="font-medium text-brand-700 underline">
+            Esqueci a senha
+          </Link>
+        </p>
+        <p className="text-center text-sm">
           <Link to="/privacidade" className="font-medium text-brand-700 underline">
             Privacidade e seus dados
           </Link>

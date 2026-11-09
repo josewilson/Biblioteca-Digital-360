@@ -174,3 +174,21 @@ test.describe('acessibilidade (axe) — privacidade', () => {
     await audit(page, info, 'privacidade-logado')
   })
 })
+
+test.describe('acessibilidade (axe) — recuperação de senha', () => {
+  test('pedido do link e tela da senha nova', async ({ page }, info) => {
+    await page.goto('/login')
+    await page.getByRole('link', { name: 'Esqueci a senha' }).click()
+    await heading(page)
+    await audit(page, info, 'esqueci-senha')
+
+    await page.getByLabel('E-mail').fill('ninguem@e2e.test')
+    await page.getByRole('button', { name: 'Enviar link' }).click()
+    await expect(page.getByText(/Se este e-mail tiver conta/)).toBeVisible()
+    await audit(page, info, 'esqueci-senha-enviado')
+
+    await page.goto('/redefinir-senha?token=de-teste')
+    await heading(page)
+    await audit(page, info, 'redefinir-senha')
+  })
+})
