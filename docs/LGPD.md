@@ -9,6 +9,7 @@ revisar a política da tela `/privacidade`, definir o encarregado (DPO) e o cana
 | `users` | nome, e-mail, matrícula, telefone, endereço, CPF (opcional), perfis, hash da senha |
 | `loans`, `reservations`, `fines` (via empréstimo) | histórico de uso da biblioteca |
 | `notifications` | texto dos avisos enviados (título de livro, prazo, valor de multa) |
+| `password_resets` | hash do token de recuperação de senha (sem o token): apagado na anonimização |
 | `audit_logs` | ação, IP e data; `LOGIN_FAILED`/`LOGIN_BLOCKED` guardam o e-mail digitado |
 
 Coleta mínima: só nome, e-mail e perfil são obrigatórios. O CPF nunca é devolvido pela API de usuários nem aparece nas telas;

@@ -39,6 +39,7 @@ management:
       enabled: false
 
 app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:3000}   # endereço do site nos links dos e-mails (https://seu-dominio em produção)
   privacy:
     contact: ${PRIVACY_CONTACT:}   # texto livre mostrado em /privacidade: encarregado (DPO) e como falar com ele
   notifications:

@@ -5,9 +5,10 @@
 - Senhas com BCrypt. Hash e CPF nunca saem na API.
 - Cadastro de usuários (`/api/v1/users`): SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT. Desativar: só os dois administradores.
   Escalada bloqueada: bibliotecário/auxiliar só cadastram TEACHER, STUDENT, EMPLOYEE, VISITOR; só SUPER_ADMIN cria SUPER_ADMIN.
-- Auditoria: `LOGIN_OK`, `LOGIN_FAILED` (com e-mail tentado e IP), `USER_CREATED`, `USER_DEACTIVATED` em `audit_logs`.
+- Auditoria: `LOGIN_OK`, `LOGIN_FAILED` (com e-mail tentado e IP), `USER_CREATED`, `USER_DEACTIVATED`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET_DONE` em `audit_logs`.
 - Primeiro SUPER_ADMIN: `ADMIN_EMAIL`/`ADMIN_PASSWORD`, usados só se não houver usuário.
-- **Pendente:** recuperação de senha por e-mail (depende de SMTP testado), permissões finas por `permissions` (hoje só por perfil).
+- **Recuperação de senha ("Esqueci a senha"):** `POST /auth/forgot` e `POST /auth/reset` (públicos, limitados por IP no nginx). O token tem 256 bits aleatórios, vale 1 hora e **uma vez**; o banco guarda só o hash SHA-256 (`password_resets`). A resposta do pedido é sempre a mesma (não revela quem tem conta); no máximo 3 pedidos por conta por hora; pedido novo cancela o link anterior; usar o link troca a senha e derruba todas as sessões abertas. O link fica na fila de avisos só até o envio (depois a mensagem é substituída). **Limites conhecidos:** com o canal `log` o link aparece no log do servidor; e-mail de quem tem acesso à caixa de entrada continua sendo o fator de recuperação.
+- **Pendente:** permissões finas por `permissions` (hoje só por perfil).
 - **Senha temporária:** cadastro e redefinição feitos pela equipe obrigam o dono a criar a própria senha. Até lá o token não traz perfil nenhum. Exceção: o primeiro administrador (`ADMIN_PASSWORD`) não é obrigado; troque em "Minha senha". Errar a senha atual conta para o bloqueio de login.
 - **LGPD:** exportação e anonimização de dados pessoais, retenção das tentativas de login (90 dias) e política em `/privacidade`: ver `LGPD.md`.
 - **Hierarquia:** só se edita, redefine, desativa ou reativa quem se poderia cadastrar (bibliotecário não mexe em administrador; só SUPER_ADMIN mexe em SUPER_ADMIN). Ninguém altera os próprios perfis nem desativa a própria conta.

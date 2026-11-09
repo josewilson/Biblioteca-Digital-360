@@ -71,6 +71,7 @@ class PersonalDataStore {
     /** Apaga o que identifica a pessoa fora de users: avisos, IPs e e-mails digitados em tentativas de login. */
     void scrub(Long id, String oldEmail) {
         jdbc.update("delete from notifications where user_id = ?", id);
+        jdbc.update("delete from password_resets where user_id = ?", id);
         jdbc.update("update audit_logs set details = null, ip_address = null where user_id = ?", id);
         jdbc.update("""
                 update audit_logs set details = null, ip_address = null
