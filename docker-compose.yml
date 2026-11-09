@@ -89,6 +89,42 @@ services:
     mem_limit: 128m
     logging: *logging
 
+  # Cópia dos backups para fora do servidor (opcional): só liga se BACKUP_REMOTE estiver preenchido. Usa rclone, que fala com
+  # S3 (AWS, Backblaze B2, Wasabi, MinIO...), Google Drive, SFTP etc. Exemplo para S3, no .env:
+  #   BACKUP_REMOTE=offsite:meu-bucket/biblioteca
+  #   RCLONE_CONFIG_OFFSITE_TYPE=s3  RCLONE_CONFIG_OFFSITE_PROVIDER=AWS  RCLONE_CONFIG_OFFSITE_REGION=sa-east-1
+  #   RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID=...  RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY=...
+  # "copy" nunca apaga no destino: a retenção de lá é com o próprio provedor (regra de ciclo de vida do bucket).
+  backup-sync:
+    profiles: ["full"]
+    image: rclone/rclone:1.76.0
+    environment:
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+      RCLONE_CONFIG_OFFSITE_TYPE: ${RCLONE_CONFIG_OFFSITE_TYPE:-}
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${RCLONE_CONFIG_OFFSITE_PROVIDER:-}
+      RCLONE_CONFIG_OFFSITE_REGION: ${RCLONE_CONFIG_OFFSITE_REGION:-}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${RCLONE_CONFIG_OFFSITE_ENDPOINT:-}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY:-}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "$BACKUP_REMOTE" ]; then
+          echo "BACKUP_REMOTE vazio: cópia dos backups para fora do servidor está DESLIGADA."
+          exec tail -f /dev/null
+        fi
+        while true; do
+          rclone copy /backups "$BACKUP_REMOTE" --include 'biblioteca-*.dump' --include 'antes-*.dump'             && echo "cópia externa ok" || echo "COPIA EXTERNA FALHOU" >&2
+          sleep 3600
+        done
+    volumes:
+      - backups:/backups:ro
+    depends_on:
+      - backup
+    restart: unless-stopped
+    mem_limit: 128m
+    logging: *logging
+
   web:
     profiles: ["full"]
     build: ./frontend
