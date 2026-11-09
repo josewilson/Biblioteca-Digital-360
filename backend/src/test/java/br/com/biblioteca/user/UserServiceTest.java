@@ -22,7 +22,7 @@ class UserServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final RoleRepository roles = mock(RoleRepository.class);
     private final UserService service =
-            new UserService(users, roles, new BCryptPasswordEncoder(), mock(AuditService.class));
+            new UserService(users, roles, new BCryptPasswordEncoder(), mock(AuditService.class), mock(PersonalDataStore.class));
 
     private CreateUserRequest request(String email, String... roleCodes) {
         return new CreateUserRequest("Ana Souza", email, "senha-forte-1", null, null, null, null, Set.of(roleCodes));

@@ -2,6 +2,7 @@ package br.com.biblioteca.user;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,6 +76,25 @@ public class UserController {
     public ResponseEntity<Void> deactivate(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
         service.deactivate(id, rolesOf(auth), callerId(auth), http.getRemoteAddr());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/export")
+    @PreAuthorize(Access.ADMIN)
+    public ResponseEntity<Map<String, Object>> export(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
+        return download(id, service.export(id, callerId(auth), http.getRemoteAddr()));
+    }
+
+    @PostMapping("/{id}/anonymize")
+    @PreAuthorize(Access.ADMIN)
+    public ResponseEntity<Void> anonymize(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
+        service.anonymize(id, rolesOf(auth), callerId(auth), http.getRemoteAddr());
+        return ResponseEntity.noContent().build();
+    }
+
+    static ResponseEntity<Map<String, Object>> download(Long id, Map<String, Object> data) {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"meus-dados-" + id + ".json\"")
+                .body(data);
     }
 
     @PostMapping("/{id}/reactivate")

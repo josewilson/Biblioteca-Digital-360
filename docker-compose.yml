@@ -96,7 +96,8 @@ services:
     environment:
       LOGIN_RATE: ${LOGIN_RATE:-30r/m}   # tentativas de login por IP; só o ambiente de teste de ponta a ponta sobe isto
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz | grep -q UP"]
+      # Só o próprio nginx: o /healthz depende do backend, que leva até ~100 s para subir, e marcaria o site como doente à toa.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null"]
       interval: 15s
       timeout: 5s
       retries: 5

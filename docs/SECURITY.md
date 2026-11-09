@@ -9,6 +9,7 @@
 - Primeiro SUPER_ADMIN: `ADMIN_EMAIL`/`ADMIN_PASSWORD`, usados só se não houver usuário.
 - **Pendente:** recuperação de senha por e-mail (depende de SMTP testado), permissões finas por `permissions` (hoje só por perfil).
 - **Senha temporária:** cadastro e redefinição feitos pela equipe obrigam o dono a criar a própria senha. Até lá o token não traz perfil nenhum. Exceção: o primeiro administrador (`ADMIN_PASSWORD`) não é obrigado; troque em "Minha senha". Errar a senha atual conta para o bloqueio de login.
+- **LGPD:** exportação e anonimização de dados pessoais, retenção das tentativas de login (90 dias) e política em `/privacidade`: ver `LGPD.md`.
 - **Hierarquia:** só se edita, redefine, desativa ou reativa quem se poderia cadastrar (bibliotecário não mexe em administrador; só SUPER_ADMIN mexe em SUPER_ADMIN). Ninguém altera os próprios perfis nem desativa a própria conta.
 
 ## Autorização por URL (Fase 4)

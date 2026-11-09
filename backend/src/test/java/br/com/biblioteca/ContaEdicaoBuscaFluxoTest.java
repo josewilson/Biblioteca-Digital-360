@@ -251,4 +251,51 @@ class ContaEdicaoBuscaFluxoTest {
         String librarian = activate(person("Bibi Regras", "LIBRARIAN"));
         fetch(librarian, "/api/v1/policies").andExpect(status().isForbidden());
     }
+
+    @Test
+    void cadaUmVeSeusDadosEAdministracaoAnonimizaSoSemPendenciaESemApagarOHistorico() throws Exception {
+        Person ana = person("Ana Privada", "STUDENT");
+        send(admin, "/api/v1/auth/login", "{\"email\":\"%s\",\"password\":\"errada-1\"}".formatted(ana.email()))
+                .andExpect(status().isUnauthorized());
+        String anaToken = activate(ana);
+
+        // direito de acesso: a própria pessoa vê seus dados, inclusive os acessos
+        fetch(anaToken, "/api/v1/me/data")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profile.email").value(ana.email()))
+                .andExpect(jsonPath("$.accessLog[0].action").exists());
+        fetch(anaToken, "/api/v1/users/" + ana.id() + "/export").andExpect(status().isForbidden());
+        fetch(admin, "/api/v1/users/" + ana.id() + "/export")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.profile.full_name").value("Ana Privada"));
+
+        // com empréstimo em aberto não anonimiza
+        JsonNode obra = book("Livro da Ana", "Autor Privacidade");
+        long copyId = 0;
+        for (JsonNode c : obra.get("copies")) {
+            if ("CIRCULANTE".equals(c.get("kind").asText())) {
+                copyId = c.get("id").asLong();
+            }
+        }
+        long loanId = read(send(admin, "/api/v1/loans", "{\"userId\":%d,\"copyId\":%d}".formatted(ana.id(), copyId))
+                .andExpect(status().isCreated())).get("id").asLong();
+        send(admin, "/api/v1/users/" + ana.id() + "/anonymize", "").andExpect(status().isUnprocessableEntity());
+        send(admin, "/api/v1/loans/" + loanId + "/return", "").andExpect(status().isOk());
+
+        // sem pendência: anonimiza, derruba a sessão, some da busca e libera o e-mail; o histórico fica
+        String bib = activate(person("Bibi Privacidade", "LIBRARIAN"));
+        send(bib, "/api/v1/users/" + ana.id() + "/anonymize", "").andExpect(status().isForbidden());
+        send(admin, "/api/v1/users/" + ana.id() + "/anonymize", "").andExpect(status().isNoContent());
+        send(admin, "/api/v1/users/" + ana.id() + "/anonymize", "").andExpect(status().isUnprocessableEntity());
+        fetch(anaToken, "/api/v1/me/data").andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(ana.email(), FINAL)))
+                .andExpect(status().isUnauthorized());
+        search("Ana Privada", "/api/v1/users").andExpect(jsonPath("$.totalElements").value(0));
+        fetch(admin, "/api/v1/users/" + ana.id() + "/export")
+                .andExpect(jsonPath("$.profile.full_name").value("Usuário anonimizado"))
+                .andExpect(jsonPath("$.profile.cpf").doesNotExist())
+                .andExpect(jsonPath("$.accessLog[?(@.ip_address != null)]").isEmpty())
+                .andExpect(jsonPath("$.loans[0].title").value("Livro da Ana"));
+    }
 }
