@@ -9,12 +9,13 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 cujo código foi **removido** depois de substituído pelos módulos atuais (continua no histórico do Git, antes do commit que o apagou).
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: LGPD (exportar e anonimizar dados, `/privacidade`), troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
+- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: migração para o Spring Boot 4, remoção do código legado da aula, ambiente de homologação (HTTPS opcional, backup diário, limites, `/healthz`), e-mail SMTP endurecido com teste pelo administrador, LGPD (exportar e anonimizar dados, `/privacidade`), troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
 - **Não feito:** OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido, teste de carga, teste manual com leitor de tela, exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `backend/pom.xml` mandam)
-Java 21 · Spring Boot 3.5.16 (Web, Validation, Data JPA, Actuator, Security + OAuth2 resource server para JWT) · PostgreSQL 16 · Flyway · JUnit 5 · Testcontainers · Maven Wrapper.
+Java 21 · Spring Boot 4.1.2 (Web MVC, Validation, Data JPA, Actuator, Mail, Security + OAuth2 resource server para JWT; Hibernate 7, Jackson 3) · PostgreSQL 16 · Flyway · JUnit 5 · Testcontainers 2 · Maven Wrapper.
+Spring Boot 4: starters e pacotes de teste mudaram (`spring-boot-starter-webmvc`, `-flyway`, `-security-test`; `org.springframework.boot.webmvc.test.autoconfigure`; Jackson em `tools.jackson`, anotações continuam em `com.fasterxml.jackson.annotation`). Não volte a nomes do Spring Boot 3.
 Frontend (`frontend/`): React 19, TypeScript 7 (strict), Vite 8, React Router 8, TanStack Query 5, React Hook Form 7 + Zod 4, Tailwind CSS 4, Lucide, Recharts 3, Vitest 5 + Testing Library. Versões exatas em `frontend/package.json`.
 Planejado, ainda **não** no projeto: springdoc OpenAPI, Mockito explícito (já vem no starter de teste). Dependência nova só com finalidade concreta, justificada ao usuário.
 

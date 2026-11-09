@@ -73,5 +73,6 @@ export async function uiLogin(page: Page, email: string, password: string): Prom
   await page.getByRole('button', { name: 'Entrar' }).click()
   // Espera sair da tela de login (no celular o menu fica recolhido, então não dá para esperar por ele).
   await page.waitForURL((url) => !url.pathname.endsWith('/login'))
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  // 20 s: o primeiro login depois de subir o backend também carrega o painel pela primeira vez (JVM fria).
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20_000 })
 }
