@@ -49,4 +49,4 @@ Os testes **não dependem de banco vazio** (verificado: rodadas seguidas na mesm
 - **O axe-core encontra só uma parte dos problemas de acessibilidade** (a própria ferramenta avisa que automação cobre uma fração). **Teste manual com leitor de tela (NVDA, VoiceOver) não foi feito.**
 - A aparência foi conferida por mim em capturas; não houve revisão de um designer nem teste com usuários.
 - **GitHub Actions (`.github/workflows/ci.yml`) foi escrito mas não executado**: não consegui rodá-lo daqui. Os mesmos comandos rodaram localmente, mas o CI real pode revelar diferenças de ambiente.
-- E-mail SMTP real, carga e desempenho no navegador (Lighthouse): não testados.
+- E-mail com o provedor real (o caminho SMTP é testado contra o Mailpit), carga e desempenho no navegador (Lighthouse): não testados.
