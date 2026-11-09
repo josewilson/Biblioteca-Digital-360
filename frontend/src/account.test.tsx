@@ -177,3 +177,45 @@ describe('privacidade (LGPD)', () => {
     expect(screen.queryByRole('button', { name: 'Exportar dados de Ana Souza' })).not.toBeInTheDocument()
   })
 })
+
+describe('contato de privacidade e e-mail de teste', () => {
+  it('a página de privacidade mostra o contato configurado pela instituição', async () => {
+    mockFetch({ 'GET /api/v1/privacy': () => ({ contact: 'Encarregado: Maria Silva, privacidade@escola.test' }) })
+    renderApp('/privacidade')
+
+    expect(await screen.findByText('Encarregado: Maria Silva, privacidade@escola.test')).toBeInTheDocument()
+  })
+
+  it('administrador envia o e-mail de teste e vê o resultado; canal log avisa que nada saiu', async () => {
+    tokenStore.set(fakeJwt(['ADMIN_INSTITUTION']))
+    let channel = 'log'
+    const { calls } = mockFetch({
+      'GET /api/v1/policies': () => [],
+      'POST /api/v1/notifications/test': () => ({ channel, to: 'admin@escola.test' }),
+    })
+    renderApp('/regras')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Enviar e-mail de teste para mim' }))
+    expect(await screen.findByText(/nada foi enviado de verdade/)).toBeInTheDocument()
+
+    channel = 'smtp'
+    await user.click(screen.getByRole('button', { name: 'Enviar e-mail de teste para mim' }))
+    expect(await screen.findByText(/E-mail enviado para admin@escola.test/)).toBeInTheDocument()
+    expect(calls.filter((c) => c.key === 'POST /api/v1/notifications/test')).toHaveLength(2)
+  })
+
+  it('erro do provedor aparece com o motivo', async () => {
+    tokenStore.set(fakeJwt(['ADMIN_INSTITUTION']))
+    mockFetch({
+      'GET /api/v1/policies': () => [],
+      'POST /api/v1/notifications/test': () => problem(422, 'Não foi possível enviar: MailAuthenticationException: 535'),
+    })
+    renderApp('/regras')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Enviar e-mail de teste para mim' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('MailAuthenticationException')
+  })
+})

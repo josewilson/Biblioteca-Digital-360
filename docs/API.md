@@ -14,6 +14,7 @@ Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
 | `DELETE /users/{id}`, `POST /users/{id}/reactivate` | administradores | desativa / reativa (não a própria conta) |
 | `GET /users/{id}/export` | administradores | baixa todos os dados pessoais do usuário (JSON, inclui CPF); fica na auditoria |
 | `POST /users/{id}/anonymize` | administradores | LGPD: apaga a identidade (irreversível). 422 com empréstimo, multa ou reserva em aberto (ver `LGPD.md`) |
+| `GET /privacy` | público | contato de privacidade da instituição (`PRIVACY_CONTACT`), mostrado em `/privacidade` |
 | `GET /me/data` | autenticado | baixa os próprios dados pessoais (JSON) |
 | `POST /notifications/test` | administradores | manda um e-mail de teste ao próprio administrador; 422 com o motivo se o provedor recusar |
 | `GET /policies`, `PUT /policies/{perfil}` | administradores | regras de empréstimo e multa por dia, de cada perfil que empresta |

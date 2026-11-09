@@ -1,13 +1,14 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Download } from 'lucide-react'
 import { Link } from 'react-router'
-import { downloadFile } from '../lib/api'
+import { api, downloadFile } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Button, Card, ErrorAlert } from '../components/ui'
 
 /** Pública (aberta também antes do login). Descreve o que o sistema faz hoje; a instituição deve revisar o texto. */
 export function PrivacyPage() {
   const { user } = useAuth()
+  const info = useQuery({ queryKey: ['privacy'], queryFn: () => api<{ contact: string }>('/privacy') })
   const download = useMutation({ mutationFn: () => downloadFile('/me/data', {}, 'meus-dados.json') })
 
   return (
@@ -81,6 +82,7 @@ export function PrivacyPage() {
 
       <Card title="Contato">
         <p>Dúvidas, pedidos ou reclamações: procure a administração da biblioteca da sua instituição.</p>
+        {info.data?.contact && <p className="mt-2 font-medium">{info.data.contact}</p>}
       </Card>
 
       <p>

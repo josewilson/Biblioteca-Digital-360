@@ -253,6 +253,12 @@ class ContaEdicaoBuscaFluxoTest {
     }
 
     @Test
+    void contatoDePrivacidadeEPublicoMasAreaDeDadosNao() throws Exception {
+        mvc.perform(get("/api/v1/privacy")).andExpect(status().isOk()).andExpect(jsonPath("$.contact").exists());
+        mvc.perform(get("/api/v1/me/data")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void cadaUmVeSeusDadosEAdministracaoAnonimizaSoSemPendenciaESemApagarOHistorico() throws Exception {
         Person ana = person("Ana Privada", "STUDENT");
         send(admin, "/api/v1/auth/login", "{\"email\":\"%s\",\"password\":\"errada-1\"}".formatted(ana.email()))

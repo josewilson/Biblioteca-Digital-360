@@ -40,9 +40,21 @@ SPRING_MAIL_PASSWORD=...
 Servidor local sem senha (teste): `MAIL_SMTP_AUTH=false` e `MAIL_SMTP_STARTTLS=false`. O backend **recusa subir** com o canal `smtp` sem host, remetente ou (com autenticação ligada) usuário, para o erro aparecer na hora e não aviso a aviso. Conexão e leitura têm tempo limite (5 s e 10 s): provedor fora do ar não trava o sistema, e depois de 3 falhas seguidas a rodada de envio para e retoma no minuto seguinte.
 **Confira com o provedor de verdade**, logado como administrador: `POST /api/v1/notifications/test` manda um e-mail de teste para o seu endereço e devolve o canal ligado (`log` não envia nada) ou o motivo do erro. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
 
+## Privacidade
+Preencha `PRIVACY_CONTACT` no `.env` com o encarregado (DPO) e o contato, por exemplo `Encarregado: Maria Silva, privacidade@sua-escola.com.br`. Aparece na página pública `/privacidade`. O texto da página é um rascunho do que o sistema faz: peça revisão jurídica antes de abrir (`docs/LGPD.md`).
+
 ## Dados e backup
 O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um dump por dia em `/backups` (volume `backups`) e apaga os com mais de `BACKUP_KEEP_DAYS` dias (padrão 14). O primeiro dump sai logo ao subir e pode estar vazio se o backend ainda não tiver migrado o banco; o seguinte já vem completo.
-- **Copie os dumps para fora do servidor.** O volume está na mesma máquina: se o disco morrer, o backup morre junto. Ex.: `docker compose --profile full cp backup:/backups ./backups-copia`, agendado e enviado a outro lugar.
+- **Cópia para fora do servidor (recomendado):** o volume está na mesma máquina, e se o disco morrer o backup morre junto. O serviço `backup-sync` (rclone) copia os dumps de hora em hora para um armazenamento externo e fica **desligado** enquanto `BACKUP_REMOTE` estiver vazio. Para S3 e compatíveis (AWS, Backblaze B2, Wasabi...), no `.env`:
+  ```
+  BACKUP_REMOTE=offsite:meu-bucket/biblioteca
+  RCLONE_CONFIG_OFFSITE_TYPE=s3
+  RCLONE_CONFIG_OFFSITE_PROVIDER=AWS            # ou Other, com RCLONE_CONFIG_OFFSITE_ENDPOINT=https://...
+  RCLONE_CONFIG_OFFSITE_REGION=sa-east-1
+  RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID=...
+  RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY=...
+  ```
+  A cópia nunca apaga no destino: configure a retenção no próprio provedor (regra de ciclo de vida do bucket). Falhas aparecem no log (`docker compose --profile full logs backup-sync`). Testado com um endpoint S3 local; **não testado com o seu provedor**. Para Google Drive, SFTP etc., use as variáveis `RCLONE_CONFIG_OFFSITE_*` do tipo correspondente (documentação do rclone). Use uma chave de acesso que só grave nesse bucket.
 - **Teste a restauração:** `scripts/restore-test.sh` carrega o dump mais recente num banco temporário, confere tabelas, migrações e usuários, e apaga o temporário. Rode depois de subir e de vez em quando.
 - **Restaurar de verdade** (num banco vazio): `docker compose --profile full exec -T backup cat /backups/ARQUIVO.dump | docker compose exec -T postgres pg_restore -U biblioteca -d biblioteca --no-owner`
 - Backup manual antes de uma atualização: `docker compose --profile full exec -T backup pg_dump -Fc -f /backups/antes-da-atualizacao.dump` (esse nome não é apagado pela rotina).
@@ -66,7 +78,9 @@ O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um du
 - [ ] `DB_PASSWORD` e `JWT_SECRET` fortes e únicos, só no `.env` do servidor
 - [ ] `ADMIN_EMAIL`/`ADMIN_PASSWORD` removidos do `.env` depois do primeiro acesso
 - [ ] HTTPS ligado (`docker-compose.tls.yml`) e `WEB_BIND=127.0.0.1`
-- [ ] Cópia dos backups para fora do servidor e `scripts/restore-test.sh` aprovado
+- [ ] `BACKUP_REMOTE` preenchido (cópia externa) e `scripts/restore-test.sh` aprovado
+- [ ] `PRIVACY_CONTACT` preenchido e o texto de `/privacidade` revisado por quem responde juridicamente pela instituição
+- [ ] E-mail conferido: botão "Enviar e-mail de teste" em Regras de empréstimo (administrador) recebeu a mensagem
 - [ ] Monitor externo apontado para `https://SEU-DOMINIO/healthz`
 - [ ] Porta do banco não exposta (o compose já publica só em 127.0.0.1)
 - [ ] Senha do administrador trocada em "Minha senha" por uma que só você conhece

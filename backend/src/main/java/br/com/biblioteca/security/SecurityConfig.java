@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers("/api/v1/auth/login", "/actuator/health").permitAll()
+                        .requestMatchers("/api/v1/auth/login", "/api/v1/privacy", "/actuator/health").permitAll()
                         // Por URL (antes da validação do corpo): consulta ao acervo é de todos; o resto, da equipe.
                         // Os @PreAuthorize nos controllers continuam como segunda barreira.
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**", "/api/v1/authors",

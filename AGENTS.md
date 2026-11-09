@@ -10,7 +10,7 @@ cujo código foi **removido** depois de substituído pelos módulos atuais (cont
 
 ## 2. Estado real (atualize ao concluir cada fase)
 - **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: migração para o Spring Boot 4, remoção do código legado da aula, ambiente de homologação (HTTPS opcional, backup diário, limites, `/healthz`), e-mail SMTP endurecido com teste pelo administrador, LGPD (exportar e anonimizar dados, `/privacidade`), troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
-- **Não feito:** OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido, teste de carga, teste manual com leitor de tela, exclusão de obra, upload de capa.
+- **Não feito:** OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido, teste manual com leitor de tela, exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `backend/pom.xml` mandam)
