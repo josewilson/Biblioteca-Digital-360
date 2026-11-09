@@ -29,6 +29,18 @@ Revisão da Fase 7: **medida**, não estimada. Cada número abaixo veio de execu
 
 Os relatórios já eram aceitáveis (≤ 270 ms com 205 mil empréstimos) e não foram alterados.
 
+## Teste de carga (k6, `loadtest/`)
+Pilha completa (nginx + backend + PostgreSQL em Docker, mesma máquina de desenvolvimento, Windows/Docker Desktop, Spring Boot 4.1.2), base com ~1 000 obras e ~300 usuários criados pelo próprio teste mais os dados do E2E. Equipe consultando: busca de obras com acento, detalhe, busca de usuários, painel e listas de empréstimos.
+
+| Perfil | Requisições | Vazão | p95 | Mediana | Erros |
+|---|---|---|---|---|---|
+| 50 usuários simultâneos, ~1 s de pausa entre ações, 2 min 15 s | 5 157 | 23/s | **270 ms** | 31 ms | 0% |
+| 100 usuários, ~0,1 s de pausa (estresse), 2 min 15 s | 11 048 | **80/s** | 1,68 s | 528 ms | 0% |
+
+- Dentro do limite do script (p95 < 800 ms, erros < 1%) no perfil realista; no estresse o p95 estoura, mas **nada falha**: o sistema degrada a latência, não derruba.
+- O ponto de saturação medido é ~80 requisições/s com **uma** instância do backend (768 MB, pool de conexões padrão). Para uma biblioteca escolar (dezenas de usuários simultâneos, pausas de segundos) sobra folga; mais que isso exige medir de novo no servidor real.
+- **Limites da medição:** base bem menor que a da revisão acima (50 mil obras), cliente e servidor na mesma máquina disputando CPU, um único tipo de usuário (equipe, token reaproveitado), só leituras. **Não medimos** empréstimo/devolução concorrentes, o custo do login (BCrypt, ~190 ms por tentativa, limitado a 30/min por IP no nginx) nem a rede real.
+
 ## Regressão guardada por teste
 `ConsultasPorRequisicaoTest` (PostgreSQL real, 12 linhas por lista) conta as consultas JPA de cada lista com as estatísticas do Hibernate e **falha se alguma voltar a custar uma consulta por linha**. Valores atuais: empréstimos 1, usuários 2, reservas 2, obras 4, multas 1.
 
@@ -39,6 +51,6 @@ Os relatórios já eram aceitáveis (≤ 270 ms com 205 mil empréstimos) e não
 - **Frontend:** o código dos gráficos (~114 kB comprimidos) é carregado só no painel; o restante do aplicativo tem ~167 kB comprimidos. Não foi medido tempo de carregamento em navegador (Lighthouse não rodou).
 
 ## Limites da medição
-- Uma só máquina, um só usuário por vez: **não é teste de carga**. Concorrência foi verificada só quanto à *correção* (travas), não quanto a vazão.
+- As medições da tabela acima são de um usuário por vez, numa só máquina. A vazão sob concorrência está em "Teste de carga" (só leituras); a concorrência de escrita foi verificada quanto à *correção* (travas), não quanto à vazão.
 - Números absolutos mudam com o hardware; vale a *proporção* antes/depois e a contagem de consultas, que é determinística.
 - O relatório de obras mais emprestadas pareceu piorar (218 → 270 ms), mas as consultas SQL dele não mudaram: o `EXPLAIN` mostra 127 ms com o índice novo contra 142 ms sem ele. É ruído da medição.

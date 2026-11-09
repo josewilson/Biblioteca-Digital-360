@@ -288,5 +288,5 @@ ambiente · containers sem root · banco publicado apenas em `127.0.0.1`. Revis�
 
 ## Limitações conhecidas
 Não existem ainda: OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido (use um proxy com certificado),
-exclusão de obra, envio de imagem de capa e teste de carga. Entrega de avisos pressupõe **uma única
-instância** do backend. SMTP real não foi testado contra um servidor de e-mail. Lista completa no [roadmap](docs/ROADMAP.md).
+exclusão de obra e envio de imagem de capa. O teste de carga (`loadtest/`) cobre só leituras. Entrega de avisos pressupõe **uma única
+instância** do backend. O envio por SMTP é testado contra um servidor local (Mailpit), não contra o seu provedor. Lista completa no [roadmap](docs/ROADMAP.md).
