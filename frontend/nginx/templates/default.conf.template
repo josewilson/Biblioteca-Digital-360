@@ -1,5 +1,6 @@
-# Limite de tentativas de login por IP: 30 por minuto, com folga de 10 seguidas (cabe uma turma atrás do mesmo IP). Passou disso: 429.
-limit_req_zone $binary_remote_addr zone=login:10m rate=30r/m;
+# Limite de tentativas de login por IP (LOGIN_RATE, padrão 30r/m), com folga de 10 seguidas (cabe uma turma atrás
+# do mesmo IP). Passou disso: 429. Este arquivo é um modelo: o nginx troca ${LOGIN_RATE} ao subir.
+limit_req_zone $binary_remote_addr zone=login:10m rate=${LOGIN_RATE};
 limit_req_status 429;
 
 server {

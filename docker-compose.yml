@@ -93,6 +93,8 @@ services:
       - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-3000}:80"   # com HTTPS (docker-compose.tls.yml), use WEB_BIND=127.0.0.1
     depends_on:
       - backend
+    environment:
+      LOGIN_RATE: ${LOGIN_RATE:-30r/m}   # tentativas de login por IP; só o ambiente de teste de ponta a ponta sobe isto
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz | grep -q UP"]
       interval: 15s
