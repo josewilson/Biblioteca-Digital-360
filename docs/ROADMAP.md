@@ -8,4 +8,5 @@
 - [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendentes: OpenAPI/Swagger, edição/exclusão de obra, upload de capa
 - [x] Fase 7 — Segurança, desempenho, Docker, E2E (Playwright + axe), CI/Dependabot. **Pendentes:** HTTPS/HSTS (proxy com certificado), teste com leitor de tela, teste de carga
 - [x] Pré-produção, passo 1 — Troca e redefinição de senha, senha temporária, revogação imediata de sessão, edição de obra/exemplar/usuário/cadastros, reativação de usuário, regras de empréstimo pela tela, busca sem acento (índices trigram, V9), seletores com busca no servidor
-- [ ] Pré-produção, próximos passos — dependências (Spring Boot 4, PRs do Dependabot), ambiente de homologação (HTTPS, IP real atrás do proxy, limites dos containers, backup automático, SMTP real, monitoramento), LGPD
+- [x] Pré-produção, passo 2 — Dependências: nginx 1.29; Dependabot não propõe mais Spring Boot de versão maior nem a imagem do Maven (o projeto fica no Java 21). **A migração para o Spring Boot 4 continua pendente** (o PR do Dependabot falhava no CI)
+- [ ] Pré-produção, próximos passos — ambiente de homologação (HTTPS, IP real atrás do proxy, limites dos containers, backup automático, SMTP real, monitoramento), LGPD

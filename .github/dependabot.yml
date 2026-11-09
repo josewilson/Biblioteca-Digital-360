@@ -6,6 +6,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Spring Boot 4 é migração planejada (docs/ROADMAP.md), não atualização automática.
+      - dependency-name: "org.springframework.boot:*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -19,6 +23,9 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    ignore:
+      # O projeto fica no Java 21 (LTS); o tag da imagem do Maven traz o JDK junto.
+      - dependency-name: maven
   - package-ecosystem: docker
     directory: /frontend
     schedule:
