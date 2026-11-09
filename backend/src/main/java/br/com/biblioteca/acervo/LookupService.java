@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.biblioteca.shared.error.BusinessRuleException;
+import br.com.biblioteca.shared.error.ResourceNotFoundException;
 
 /** Cadastros simples de apoio: autores, editoras e categorias. */
 @Service
@@ -41,6 +43,33 @@ public class LookupService {
             throw new BusinessRuleException("Já existe categoria com este nome.");
         }
         Category c = categories.save(new Category(name.trim()));
+        return new NameResponse(c.getId(), c.getName());
+    }
+
+    @Transactional
+    public NameResponse renameAuthor(Long id, String name) {
+        Author a = authors.findById(id).orElseThrow(() -> new ResourceNotFoundException("Autor inexistente."));
+        a.rename(name.trim());
+        return new NameResponse(a.getId(), a.getName());
+    }
+
+    @Transactional
+    public NameResponse renamePublisher(Long id, String name) {
+        Publisher p = publishers.findById(id).orElseThrow(() -> new ResourceNotFoundException("Editora inexistente."));
+        if (publishers.existsByNameIgnoreCaseAndIdNot(name.trim(), id)) {
+            throw new BusinessRuleException("Já existe editora com este nome.");
+        }
+        p.rename(name.trim());
+        return new NameResponse(p.getId(), p.getName());
+    }
+
+    @Transactional
+    public NameResponse renameCategory(Long id, String name) {
+        Category c = categories.findById(id).orElseThrow(() -> new ResourceNotFoundException("Categoria inexistente."));
+        if (categories.existsByNameIgnoreCaseAndIdNot(name.trim(), id)) {
+            throw new BusinessRuleException("Já existe categoria com este nome.");
+        }
+        c.rename(name.trim());
         return new NameResponse(c.getId(), c.getName());
     }
 

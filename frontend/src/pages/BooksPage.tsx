@@ -32,19 +32,19 @@ export function BooksPage() {
   const { isStaff } = useAuth()
   const navigate = useNavigate()
   const [text, setText] = useState('')
-  const [title, setTitle] = useState('')
+  const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [creating, setCreating] = useState(false)
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['books', title, page],
-    queryFn: () => api<Page<Book>>('/books', { params: { title, page, size: 10, sort: 'title' } }),
+    queryKey: ['books', query, page],
+    queryFn: () => api<Page<Book>>('/books', { params: { q: query, page, size: 10, sort: 'title' } }),
   })
 
   function search(e: FormEvent) {
     e.preventDefault()
     setPage(0)
-    setTitle(text.trim())
+    setQuery(text.trim())
   }
 
   return (
@@ -64,7 +64,7 @@ export function BooksPage() {
 
       <form onSubmit={search} role="search" className="mb-4 flex max-w-xl items-end gap-2">
         <div className="flex-1">
-          <Field label="Buscar por título">
+          <Field label="Buscar por título, autor, ISBN ou código do exemplar">
             {(p) => <input {...p} className={inputClass} value={text} onChange={(e) => setText(e.target.value)} />}
           </Field>
         </div>
@@ -105,7 +105,7 @@ export function BooksPage() {
       <Dialog open={creating} title="Nova obra" onClose={() => setCreating(false)}>
         <BookForm
           onCancel={() => setCreating(false)}
-          onCreated={(book) => {
+          onSaved={(book) => {
             setCreating(false)
             navigate(`/acervo/${book.id}`)
           }}

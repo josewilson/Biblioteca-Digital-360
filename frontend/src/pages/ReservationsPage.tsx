@@ -68,7 +68,6 @@ function NewReservation() {
 
 export function ReservationsPage() {
   const queryClient = useQueryClient()
-  const userName = useUserNames()
   const [status, setStatus] = useState<ReservationStatus | ''>('')
   const [page, setPage] = useState(0)
   const [cancelling, setCancelling] = useState<Reservation | null>(null)
@@ -77,6 +76,7 @@ export function ReservationsPage() {
     queryKey: ['reservations', status, page],
     queryFn: () => api<Page<Reservation>>('/reservations', { params: { status, page, size: 10, sort: 'id,desc' } }),
   })
+  const userName = useUserNames((list.data?.content ?? []).map((item) => item.userId))
 
   const cancel = useMutation({
     mutationFn: (r: Reservation) => api<Reservation>(`/reservations/${r.id}/cancel`, { method: 'POST' }),

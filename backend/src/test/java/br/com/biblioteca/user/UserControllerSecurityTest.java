@@ -37,7 +37,7 @@ class UserControllerSecurityTest {
 
     @Test
     void respostasDaApiVemComCabecalhosDeSeguranca() throws Exception {
-        when(service.list(any())).thenReturn(new PageImpl<>(List.of()));
+        when(service.list(any(), any())).thenReturn(new PageImpl<>(List.of()));
 
         mvc.perform(get("/api/v1/users").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN"))))
                 .andExpect(status().isOk())
@@ -62,7 +62,7 @@ class UserControllerSecurityTest {
     @Test
     void bibliotecarioListaUsuarios() throws Exception {
         Page<UserResponse> vazia = new PageImpl<>(List.of());
-        when(service.list(any())).thenReturn(vazia);
+        when(service.list(any(), any())).thenReturn(vazia);
         mvc.perform(get("/api/v1/users").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN"))))
                 .andExpect(status().isOk());
     }

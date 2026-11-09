@@ -74,6 +74,7 @@ export interface Book {
   language: string | null
   description: string | null
   coverUrl: string | null
+  publisherId: number | null
   publisher: string | null
   authors: NameItem[]
   categories: NameItem[]
@@ -89,6 +90,16 @@ export interface UserRow {
   active: boolean
   roles: Role[]
   createdAt: string
+}
+
+export interface Policy {
+  role: Role
+  maxLoans: number
+  loanDays: number
+  maxRenewals: number
+  renewalDays: number
+  reservationPickupDays: number
+  dailyRate: number
 }
 
 export interface Loan {

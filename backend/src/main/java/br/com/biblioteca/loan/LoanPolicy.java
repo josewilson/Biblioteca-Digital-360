@@ -44,6 +44,22 @@ class LoanPolicy {
         this.reservationPickupDays = reservationPickupDays;
     }
 
+    void update(int maxLoans, int loanDays, int maxRenewals, int renewalDays, int reservationPickupDays) {
+        this.maxLoans = maxLoans;
+        this.loanDays = loanDays;
+        this.maxRenewals = maxRenewals;
+        this.renewalDays = renewalDays;
+        this.reservationPickupDays = reservationPickupDays;
+    }
+
+    Long getRoleId() {
+        return roleId;
+    }
+
+    String getRoleCode() {
+        return role.getCode();
+    }
+
     int getReservationPickupDays() {
         return reservationPickupDays;
     }

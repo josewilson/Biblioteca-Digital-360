@@ -1,6 +1,7 @@
 package br.com.biblioteca.user;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,8 +14,10 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.biblioteca.security.Access;
@@ -35,16 +38,18 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request,
                                                Authentication auth, HttpServletRequest http) {
-        Set<String> callerRoles = auth.getAuthorities().stream()
-                .map(a -> a.getAuthority().replaceFirst("^ROLE_", ""))
-                .collect(Collectors.toSet());
-        UserResponse created = service.create(request, callerRoles, Long.valueOf(auth.getName()), http.getRemoteAddr());
+        UserResponse created = service.create(request, rolesOf(auth), callerId(auth), http.getRemoteAddr());
         return ResponseEntity.created(URI.create("/api/v1/users/" + created.id())).body(created);
     }
 
     @GetMapping
-    public Page<UserResponse> list(Pageable pageable) {
-        return service.list(pageable);
+    public Page<UserResponse> list(@RequestParam(required = false) String q, Pageable pageable) {
+        return service.list(q, pageable);
+    }
+
+    @GetMapping("/lookup")
+    public List<UserResponse> lookup(@RequestParam List<Long> ids) {
+        return service.lookup(ids);
     }
 
     @GetMapping("/{id}")
@@ -52,10 +57,39 @@ public class UserController {
         return service.get(id);
     }
 
+    @PutMapping("/{id}")
+    public UserResponse update(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request,
+                               Authentication auth, HttpServletRequest http) {
+        return service.update(id, request, rolesOf(auth), callerId(auth), http.getRemoteAddr());
+    }
+
+    @PostMapping("/{id}/password")
+    public ResponseEntity<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request,
+                                              Authentication auth, HttpServletRequest http) {
+        service.resetPassword(id, request.newPassword(), rolesOf(auth), callerId(auth), http.getRemoteAddr());
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize(Access.ADMIN)
     public ResponseEntity<Void> deactivate(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
-        service.deactivate(id, Long.valueOf(auth.getName()), http.getRemoteAddr());
+        service.deactivate(id, rolesOf(auth), callerId(auth), http.getRemoteAddr());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/reactivate")
+    @PreAuthorize(Access.ADMIN)
+    public UserResponse reactivate(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
+        return service.reactivate(id, rolesOf(auth), callerId(auth), http.getRemoteAddr());
+    }
+
+    private static Long callerId(Authentication auth) {
+        return Long.valueOf(auth.getName());
+    }
+
+    private static Set<String> rolesOf(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority().replaceFirst("^ROLE_", ""))
+                .collect(Collectors.toSet());
     }
 }

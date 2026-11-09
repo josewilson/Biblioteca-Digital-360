@@ -6,7 +6,9 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,6 +58,24 @@ public class LookupController {
     @GetMapping("/categories")
     public List<NameResponse> categories() {
         return service.listCategories();
+    }
+
+    @PutMapping("/authors/{id}")
+    @PreAuthorize(Access.STAFF)
+    public NameResponse renameAuthor(@PathVariable Long id, @Valid @RequestBody NameRequest r) {
+        return service.renameAuthor(id, r.name());
+    }
+
+    @PutMapping("/publishers/{id}")
+    @PreAuthorize(Access.STAFF)
+    public NameResponse renamePublisher(@PathVariable Long id, @Valid @RequestBody NameRequest r) {
+        return service.renamePublisher(id, r.name());
+    }
+
+    @PutMapping("/categories/{id}")
+    @PreAuthorize(Access.STAFF)
+    public NameResponse renameCategory(@PathVariable Long id, @Valid @RequestBody NameRequest r) {
+        return service.renameCategory(id, r.name());
     }
 
     private static ResponseEntity<NameResponse> created(String base, NameResponse body) {

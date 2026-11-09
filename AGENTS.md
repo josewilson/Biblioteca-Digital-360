@@ -9,14 +9,14 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (escritos, ainda não executados no GitHub). Esquema em V1-V8.
-- **Não feito:** OpenAPI/Swagger, recuperação de senha, HTTPS embutido, teste de carga, teste manual com leitor de tela, edição/exclusão de obra, upload de capa.
+- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
+- **Não feito:** OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido, teste de carga, teste manual com leitor de tela, exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
 ## 3. Stack e versões (as de `backend/pom.xml` mandam)
 Java 21 · Spring Boot 3.5.16 (Web, Validation, Data JPA, Actuator, Security + OAuth2 resource server para JWT) · PostgreSQL 16 · Flyway · JUnit 5 · Testcontainers · Maven Wrapper.
 Frontend (`frontend/`): React 19, TypeScript 7 (strict), Vite 8, React Router 8, TanStack Query 5, React Hook Form 7 + Zod 4, Tailwind CSS 4, Lucide, Recharts 3, Vitest 5 + Testing Library. Versões exatas em `frontend/package.json`.
-Planejado, ainda **não** no projeto: springdoc OpenAPI, Playwright, Mockito explícito (já vem no starter de teste). Dependência nova só com finalidade concreta, justificada ao usuário.
+Planejado, ainda **não** no projeto: springdoc OpenAPI, Mockito explícito (já vem no starter de teste). Dependência nova só com finalidade concreta, justificada ao usuário.
 
 ## 4. Estrutura
 ```
@@ -90,6 +90,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 
 ## 15. Frontend (`frontend/`)
 - **Autorização é do servidor.** A interface esconde menus e botões por perfil só por conveniência (`RequireRole`, `useAuth`); nunca trate isso como proteção. O JWT é lido apenas para id, perfis e validade.
+- **Sessão:** o token traz `ver` (conferido no banco a cada requisição) e `mustChangePassword` (sem perfis até trocar a senha). Quem troca a senha assume o token novo (`adoptToken`).
 - **Token** em `sessionStorage` (`lib/api.ts`). Proibido `dangerouslySetInnerHTML`, `innerHTML`, `eval` ou qualquer HTML montado com texto da API: o React já escapa o texto, e é isso que mantém o risco de XSS baixo.
 - **API:** toda chamada passa por `api()` (`lib/api.ts`), que manda o token, traduz o `ProblemDetail` em `ApiError` e derruba a sessão num 401. Tipos em `lib/types.ts` espelham os DTOs de `docs/API.md`: mudou o DTO, mude o tipo.
 - **Dados do servidor** com TanStack Query (nada de `useEffect` + `fetch`); invalide as chaves afetadas após cada mutação.

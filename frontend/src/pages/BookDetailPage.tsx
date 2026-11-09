@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { BookForm } from '../components/BookForm'
 import type { Book, Copy, CopyStatus, Reservation } from '../lib/types'
 import {
   Alert,
@@ -82,12 +83,56 @@ function AddCopyDialog({ bookId, open, onClose }: { bookId: number; open: boolea
   )
 }
 
+function EditCopyForm({ copy, bookId, onClose }: { copy: Copy; bookId: number; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const { register, handleSubmit, formState } = useForm({
+    defaultValues: { barcode: copy.barcode, condition: copy.condition as string, location: copy.location ?? '' },
+  })
+  const save = useMutation({
+    mutationFn: (v: { barcode: string; condition: string; location: string }) =>
+      api<Copy>(`/copies/${copy.id}`, { method: 'PUT', body: { ...v, location: v.location || null } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['book', bookId] })
+      onClose()
+    },
+  })
+  return (
+    <form onSubmit={handleSubmit((v) => save.mutate(v))} className="space-y-3">
+      <Field label="Código do exemplar" error={formState.errors.barcode?.message}>
+        {(p) => <input {...p} className={inputClass} {...register('barcode', { required: 'Informe o código.' })} />}
+      </Field>
+      <Field label="Estado">
+        {(p) => (
+          <select {...p} className={inputClass} {...register('condition')}>
+            <option value="NOVO">Novo</option>
+            <option value="BOM">Bom</option>
+            <option value="REGULAR">Regular</option>
+            <option value="RUIM">Ruim</option>
+          </select>
+        )}
+      </Field>
+      <Field label="Localização">{(p) => <input {...p} className={inputClass} {...register('location')} />}</Field>
+      <ErrorAlert error={save.error} />
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button type="submit" loading={save.isPending}>
+          Salvar exemplar
+        </Button>
+      </div>
+    </form>
+  )
+}
+
 export function BookDetailPage() {
   const { id } = useParams()
   const bookId = Number(id)
   const { isStaff } = useAuth()
   const queryClient = useQueryClient()
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editingCopy, setEditingCopy] = useState<Copy | null>(null)
   const [pending, setPending] = useState<{ copy: Copy; status: CopyStatus } | null>(null)
 
   const { data: book, isLoading, error } = useQuery({
@@ -121,9 +166,16 @@ export function BookDetailPage() {
           .filter(Boolean)
           .join(', ')}
         actions={
-          <Link to="/acervo" className="text-sm font-medium text-brand-700 underline">
-            Voltar ao acervo
-          </Link>
+          <div className="flex items-center gap-3">
+            {isStaff && (
+              <Button variant="secondary" onClick={() => setEditing(true)}>
+                Editar obra
+              </Button>
+            )}
+            <Link to="/acervo" className="text-sm font-medium text-brand-700 underline">
+              Voltar ao acervo
+            </Link>
+          </div>
         }
       />
 
@@ -189,7 +241,7 @@ export function BookDetailPage() {
           title="Exemplares"
           actions={isStaff && <Button variant="secondary" onClick={() => setAdding(true)}>Acrescentar exemplar</Button>}
         >
-          <Table caption="Exemplares da obra" head={isStaff ? ['Código', 'Tipo', 'Situação', 'Localização', 'Alterar situação'] : ['Código', 'Tipo', 'Situação', 'Localização']}>
+          <Table caption="Exemplares da obra" head={isStaff ? ['Código', 'Tipo', 'Situação', 'Localização', 'Alterar situação', 'Dados'] : ['Código', 'Tipo', 'Situação', 'Localização']}>
             {book.copies.map((c) => (
               <tr key={c.id}>
                 <td className={cellClass}>{c.barcode}</td>
@@ -226,6 +278,13 @@ export function BookDetailPage() {
                     )}
                   </td>
                 )}
+                {isStaff && (
+                  <td className={cellClass}>
+                    <Button variant="ghost" aria-label={`Editar exemplar ${c.barcode}`} onClick={() => setEditingCopy(c)}>
+                      Editar
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </Table>
@@ -233,6 +292,12 @@ export function BookDetailPage() {
       </div>
 
       <AddCopyDialog bookId={bookId} open={adding} onClose={() => setAdding(false)} />
+      <Dialog open={editing} title="Editar obra" onClose={() => setEditing(false)}>
+        <BookForm book={book} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />
+      </Dialog>
+      <Dialog open={editingCopy !== null} title="Editar exemplar" onClose={() => setEditingCopy(null)}>
+        {editingCopy && <EditCopyForm copy={editingCopy} bookId={bookId} onClose={() => setEditingCopy(null)} />}
+      </Dialog>
       <ConfirmDialog
         open={pending !== null}
         title="Alterar situação do exemplar"

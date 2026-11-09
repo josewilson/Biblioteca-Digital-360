@@ -1,13 +1,15 @@
 # Segurança (Fase 3)
 
 - Login: `POST /api/v1/auth/login` → JWT (HS256, `JWT_SECRET` ≥ 32 caracteres, validade `JWT_TTL_MINUTES`, padrão 60). Resposta 401 igual para e-mail inexistente e senha errada.
-- API stateless; token em `Authorization: Bearer`. Perfis na claim `roles`. **Logout** = o cliente descarta o token (não há revogação no servidor; usuário desativado continua com token válido até expirar).
+- API stateless; token em `Authorization: Bearer`. Perfis na claim `roles`. **Logout** = o cliente descarta o token. A cada requisição o servidor confere usuário ativo e a versão do token: desativar, trocar senha ou mudar perfis derruba as sessões na hora (401).
 - Senhas com BCrypt. Hash e CPF nunca saem na API.
 - Cadastro de usuários (`/api/v1/users`): SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT. Desativar: só os dois administradores.
   Escalada bloqueada: bibliotecário/auxiliar só cadastram TEACHER, STUDENT, EMPLOYEE, VISITOR; só SUPER_ADMIN cria SUPER_ADMIN.
 - Auditoria: `LOGIN_OK`, `LOGIN_FAILED` (com e-mail tentado e IP), `USER_CREATED`, `USER_DEACTIVATED` em `audit_logs`.
 - Primeiro SUPER_ADMIN: `ADMIN_EMAIL`/`ADMIN_PASSWORD`, usados só se não houver usuário.
-- **Pendente:** recuperação de senha (depende do canal de e-mail, Fase 6), bloqueio por tentativas, permissões finas por `permissions` (hoje só por perfil), edição de usuário.
+- **Pendente:** recuperação de senha por e-mail (depende de SMTP testado), permissões finas por `permissions` (hoje só por perfil).
+- **Senha temporária:** cadastro e redefinição feitos pela equipe obrigam o dono a criar a própria senha. Até lá o token não traz perfil nenhum. Exceção: o primeiro administrador (`ADMIN_PASSWORD`) não é obrigado; troque em "Minha senha". Errar a senha atual conta para o bloqueio de login.
+- **Hierarquia:** só se edita, redefine, desativa ou reativa quem se poderia cadastrar (bibliotecário não mexe em administrador; só SUPER_ADMIN mexe em SUPER_ADMIN). Ninguém altera os próprios perfis nem desativa a própria conta.
 
 ## Autorização por URL (Fase 4)
 `SecurityConfig` aplica as regras por caminho **antes** da validação do corpo: sem isso, um usuário sem permissão que enviasse JSON inválido receberia 400 (com mensagens de validação) em vez de 403.
@@ -46,7 +48,7 @@ Revisão feita sobre o código e sobre a pilha rodando em containers. O que foi 
 
 **Continua em aberto (conhecido, não corrigido):**
 - **Bloqueio por e-mail** permite a alguém trancar a conta de outra pessoa por 15 min (aceito: a alternativa é pior).
-- **Token em `sessionStorage`** e sem revogação no servidor (usuário desativado mantém acesso até o token vencer, 60 min).
+- **Token em `sessionStorage`**: script injetado conseguiria lê-lo.
 - **Sem HTTPS/HSTS no projeto**: precisa de proxy com TLS na frente (ver `DEPLOYMENT.md`).
 - **Sem limite de requisições por IP** no nginx; só o bloqueio de login.
 - **Política de senha** só exige 8 caracteres (sem lista de senhas comuns).

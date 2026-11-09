@@ -3,6 +3,7 @@ import { expect, type APIRequestContext, type Page } from '@playwright/test'
 /** Administrador criado pelo backend no primeiro start (valores de e2e/e2e.env). */
 export const ADMIN = { email: 'admin@e2e.test', password: 'e2e-admin-fake-1' }
 export const PASSWORD = 'senha-e2e-1234'
+export const TEMPORARY_PASSWORD = 'temporaria-e2e-1234'
 
 /** Sufixo curto e único, para os testes não esbarrarem em dados de execuções anteriores. */
 export const uid = () => Math.random().toString(36).slice(2, 8)
@@ -30,8 +31,11 @@ export async function seedReader(request: APIRequestContext, token: string, role
   const name = `${prefix} ${id}`
   const email = `${prefix.toLowerCase().replace(/\W/g, '')}.${id}@e2e.test`
   const user = await post<{ id: number }>(request, token, '/users', {
-    fullName: name, email, password: PASSWORD, roles: [role],
+    fullName: name, email, password: TEMPORARY_PASSWORD, roles: [role],
   })
+  // Senha de cadastro é temporária: o leitor pronto para os testes já criou a própria.
+  const temporary = await apiLogin(request, email, TEMPORARY_PASSWORD)
+  await post(request, temporary, '/auth/password', { currentPassword: TEMPORARY_PASSWORD, newPassword: PASSWORD })
   return { id: user.id, name, email }
 }
 

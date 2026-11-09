@@ -14,6 +14,8 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
 
     boolean existsByBarcodeIn(Collection<String> barcodes);
 
+    boolean existsByBarcodeAndIdNot(String barcode, Long id);
+
     boolean existsByBookIdAndKindAndStatus(Long bookId, CopyKind kind, CopyStatus status);
 
     /** Trava a linha do exemplar até o fim da transação: dois empréstimos simultâneos não passam juntos. */

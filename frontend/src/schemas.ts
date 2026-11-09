@@ -62,6 +62,36 @@ export const userSchema = z.object({
 })
 export type UserForm = z.infer<typeof userSchema>
 
+export const userEditSchema = userSchema.omit({ password: true }).extend({ removeCpf: z.boolean() })
+export type UserEditForm = z.infer<typeof userEditSchema>
+
+const newPassword = z.string().min(8, 'A senha precisa de pelo menos 8 caracteres.').max(72, 'No máximo 72 caracteres.')
+
+export const resetPasswordSchema = z.object({ newPassword })
+export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Informe a senha atual.'),
+    newPassword,
+    confirmation: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmation, { path: ['confirmation'], message: 'As senhas não são iguais.' })
+export type ChangePasswordForm = z.infer<typeof changePasswordSchema>
+
+const wholeNumber = (min: number, max: number) =>
+  z.string().trim().regex(/^\d{1,3}$/, 'Use um número inteiro.').refine((v) => Number(v) >= min && Number(v) <= max, `Use um valor de ${min} a ${max}.`)
+
+export const policySchema = z.object({
+  maxLoans: wholeNumber(1, 100),
+  loanDays: wholeNumber(1, 365),
+  maxRenewals: wholeNumber(0, 20),
+  renewalDays: wholeNumber(1, 365),
+  reservationPickupDays: wholeNumber(1, 60),
+  dailyRate: z.string().trim().regex(/^\d{1,3}([.,]\d{1,2})?$/, 'Use reais com até 2 casas (ex.: 1,50).'),
+})
+export type PolicyForm = z.infer<typeof policySchema>
+
 export const waiveSchema = z.object({
   reason: z.string().trim().min(1, 'A justificativa é obrigatória.').max(300, 'No máximo 300 caracteres.'),
 })

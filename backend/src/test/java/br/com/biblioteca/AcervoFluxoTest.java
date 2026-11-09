@@ -100,7 +100,7 @@ class AcervoFluxoTest {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"BAIXADO\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("BAIXADO"));
 
-        mvc.perform(get("/api/v1/books?title=casmurro").header("Authorization", token))
+        mvc.perform(get("/api/v1/books?q=casmurro").header("Authorization", token))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].copies.length()").value(3));
     }
 }

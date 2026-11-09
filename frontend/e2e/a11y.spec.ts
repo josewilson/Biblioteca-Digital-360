@@ -61,6 +61,11 @@ test.describe('acessibilidade (axe) — equipe', () => {
     await expect(page.getByRole('table', { name: 'Exemplares da obra' })).toBeVisible()
     await audit(page, info, 'obra-detalhe')
 
+    await page.getByRole('button', { name: 'Editar obra' }).click()
+    await expect(page.getByRole('dialog', { name: 'Editar obra' })).toBeVisible()
+    await audit(page, info, 'obra-editar-dialogo')
+    await page.keyboard.press('Escape')
+
     await open('Balcão')
     await expect(page.getByRole('table', { name: 'Empréstimos em andamento' })).toBeVisible()
     await audit(page, info, 'balcao')
@@ -84,8 +89,22 @@ test.describe('acessibilidade (axe) — equipe', () => {
     await audit(page, info, 'usuarios-novo-dialogo')
     await page.keyboard.press('Escape')
 
+    await page.getByLabel('Buscar por nome, e-mail ou matrícula').fill(reader.email)
+    await page.getByRole('button', { name: 'Buscar' }).click()
+    await page.getByRole('button', { name: `Editar ${reader.name}` }).click()
+    await expect(page.getByRole('dialog', { name: 'Editar usuário' })).toBeVisible()
+    await audit(page, info, 'usuarios-editar-dialogo')
+    await page.keyboard.press('Escape')
+
     await open('Autores e categorias')
     await audit(page, info, 'cadastros')
+
+    await open('Regras de empréstimo')
+    await expect(page.getByRole('button', { name: 'Salvar regras de Aluno' })).toBeVisible()
+    await audit(page, info, 'regras')
+
+    await open('Minha senha')
+    await audit(page, info, 'minha-senha')
 
     await open('Minha área')
     await audit(page, info, 'minha-area-equipe')
@@ -99,7 +118,8 @@ test.describe('acessibilidade (axe) — equipe', () => {
 
     await uiLogin(page, ADMIN.email, ADMIN.password)
     await page.goto('/balcao')
-    await page.getByLabel('Filtrar por leitor').selectOption({ label: `${reader.name} (${reader.email})` })
+    await page.getByLabel('Filtrar por leitor: buscar').fill(reader.email)
+    await page.getByLabel('Filtrar por leitor', { exact: true }).selectOption({ label: `${reader.name} (${reader.email})` })
     const row = page.getByRole('row', { name: new RegExp(book.title) })
     await expect(row).toBeVisible()
     await row.getByRole('button', { name: 'Devolver' }).click()

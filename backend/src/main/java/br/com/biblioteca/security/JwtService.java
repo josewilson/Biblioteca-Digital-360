@@ -17,6 +17,9 @@ import br.com.biblioteca.user.User;
 @Service
 public class JwtService {
 
+    static final String CLAIM_VERSION = "ver";
+    static final String CLAIM_MUST_CHANGE_PASSWORD = "mustChangePassword";
+
     private final JwtEncoder encoder;
     private final Duration ttl;
 
@@ -32,6 +35,8 @@ public class JwtService {
                 .issuedAt(now)
                 .expiresAt(now.plus(ttl))
                 .claim("roles", user.getRoles().stream().map(Role::getCode).toList())
+                .claim(CLAIM_VERSION, user.getTokenVersion())
+                .claim(CLAIM_MUST_CHANGE_PASSWORD, user.isMustChangePassword())
                 .build();
         String token = encoder.encode(
                 JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

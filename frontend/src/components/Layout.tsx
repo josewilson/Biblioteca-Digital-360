@@ -4,10 +4,12 @@ import {
   BookOpen,
   ChartColumn,
   Handshake,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Menu,
   Receipt,
+  Scale,
   Tags,
   UserRound,
   Users,
@@ -24,6 +26,7 @@ interface NavItem {
   label: string
   icon: LucideIcon
   staffOnly?: boolean
+  adminOnly?: boolean
 }
 
 const NAV: NavItem[] = [
@@ -35,7 +38,9 @@ const NAV: NavItem[] = [
   { to: '/relatorios', label: 'Relatórios', icon: ChartColumn, staffOnly: true },
   { to: '/usuarios', label: 'Usuários', icon: Users, staffOnly: true },
   { to: '/cadastros', label: 'Autores e categorias', icon: Tags, staffOnly: true },
+  { to: '/regras', label: 'Regras de empréstimo', icon: Scale, adminOnly: true },
   { to: '/minha-area', label: 'Minha área', icon: UserRound },
+  { to: '/minha-senha', label: 'Minha senha', icon: KeyRound },
 ]
 
 /** Só deixa passar quem está logado; senão manda para o login e volta depois. */
@@ -44,6 +49,9 @@ export function RequireAuth() {
   const location = useLocation()
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+  if (user.mustChangePassword && location.pathname !== '/minha-senha') {
+    return <Navigate to="/minha-senha" replace />
   }
   return <Outlet />
 }
@@ -62,9 +70,9 @@ function Wordmark() {
 }
 
 export function Layout() {
-  const { user, isStaff, logout } = useAuth()
+  const { user, isStaff, isAdmin, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
-  const items = NAV.filter((i) => !i.staffOnly || isStaff)
+  const items = NAV.filter((i) => (!i.staffOnly || isStaff) && (!i.adminOnly || isAdmin))
   const roles = (user?.roles ?? []).map((r: Role) => ROLE_LABELS[r] ?? r).join(', ')
 
   return (

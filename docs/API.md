@@ -6,14 +6,22 @@ Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
 | Método e caminho | Quem | O que faz |
 |---|---|---|
 | `POST /auth/login` | público | devolve o token |
-| `POST/GET /users`, `GET /users/{id}` | equipe | cadastra / lista (paginado) / consulta |
-| `DELETE /users/{id}` | administradores | desativa |
+| `POST /auth/password` | autenticado | troca a própria senha (`currentPassword`, `newPassword`) e devolve token novo; os anteriores caem |
+| `POST/GET /users?q=`, `GET /users/{id}` | equipe | cadastra / lista ou busca por nome (sem acento), e-mail, matrícula / consulta |
+| `GET /users/lookup?ids=1,2` | equipe | vários usuários por id (máx. 100) |
+| `PUT /users/{id}` | equipe, só quem ela pode administrar | edita dados e perfis; `cpf`: null mantém, vazio apaga |
+| `POST /users/{id}/password` | equipe, só quem ela pode administrar | define senha temporária; o dono troca ao entrar |
+| `DELETE /users/{id}`, `POST /users/{id}/reactivate` | administradores | desativa / reativa (não a própria conta) |
+| `GET /policies`, `PUT /policies/{perfil}` | administradores | regras de empréstimo e multa por dia, de cada perfil que empresta |
 | `POST /authors`, `/publishers`, `/categories` | equipe | cadastra (editora e categoria: nome único) |
+| `PUT /authors/{id}`, `/publishers/{id}`, `/categories/{id}` | equipe | renomeia |
 | `GET /authors`, `/publishers`, `/categories` | autenticado | lista por nome |
 | `POST /books` | equipe | cadastra obra **com exemplares** (≥ 1 `CONSULTA` e ≥ 1 `CIRCULANTE`) |
-| `GET /books?title=&page=&size=` | autenticado | busca paginada por título |
+| `GET /books?q=&page=&size=` | autenticado | busca paginada: trecho do título ou autor (sem acento), ISBN ou código de exemplar exatos |
+| `PUT /books/{id}` | equipe | edita os dados da obra (exemplares não mudam aqui) |
 | `GET /books/{id}` | autenticado | obra com autores, categorias e exemplares |
 | `POST /books/{id}/copies` | equipe | acrescenta exemplar |
+| `PUT /copies/{id}` | equipe | edita código, estado e localização (o tipo não muda) |
 | `PATCH /copies/{id}/status` | equipe | `DISPONIVEL`, `PERDIDO` ou `BAIXADO`. Recusa baixa do único exemplar de consulta ativo |
 
 Exemplo de cadastro de obra:
@@ -21,7 +29,7 @@ Exemplo de cadastro de obra:
 {"title":"Dom Casmurro","isbn":"9788535910663","publicationYear":1899,"publisherId":1,"authorIds":[1],"categoryIds":[1],
  "copies":[{"barcode":"DC-1","kind":"CONSULTA","location":"Estante A"},{"barcode":"DC-2","kind":"CIRCULANTE","condition":"NOVO"}]}
 ```
-Pendente: capa por upload (hoje só `coverUrl`), editar/excluir obra, OpenAPI/Swagger.
+Pendente: capa por upload (hoje só `coverUrl`), excluir obra, OpenAPI/Swagger. Tamanho máximo de página: 100. Conflito de unicidade em gravações simultâneas responde 409.
 
 ## Balcão (Fase 5, parte 1)
 | Método e caminho | Quem | O que faz |

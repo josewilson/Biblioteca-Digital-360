@@ -13,6 +13,8 @@ public final class Access {
 
     public static final String WAIVER = "hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUTION','LIBRARIAN')";
 
+    public static final String[] ADMIN_ROLES = {"SUPER_ADMIN", "ADMIN_INSTITUTION"};
+
     public static final String ADMIN = "hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUTION')";
 
     private Access() {

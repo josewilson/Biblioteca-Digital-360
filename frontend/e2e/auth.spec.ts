@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ADMIN, PASSWORD, apiLogin, seedReader, uiLogin } from './support'
+import { ADMIN, PASSWORD, TEMPORARY_PASSWORD, apiLogin, seedReader, uid, uiLogin } from './support'
 
 test.describe('autenticação (navegador real)', () => {
   test('senha errada mostra o erro e continua no login', async ({ page, request }) => {
@@ -57,6 +57,36 @@ test.describe('autenticação (navegador real)', () => {
     }))
     expect(stored.session).toBeTruthy()
     expect(stored.local).not.toContain('eyJ')   // nenhum JWT em localStorage
+  })
+
+  test('senha temporária obriga a criar uma nova antes de usar o sistema; a sessão antiga cai ao redefinir', async ({ page, request }) => {
+    const admin = await apiLogin(request, ADMIN.email, ADMIN.password)
+    const email = `novo.${uid()}@e2e.test`
+    const created = await request.post('/api/v1/users', {
+      data: { fullName: `Novo ${uid()}`, email, password: TEMPORARY_PASSWORD, roles: ['STUDENT'] },
+      headers: { Authorization: `Bearer ${admin}` },
+    })
+    expect(created.status()).toBe(201)
+
+    await uiLogin(page, email, TEMPORARY_PASSWORD)
+    await expect(page.getByText('Esta senha é temporária')).toBeVisible()
+    await page.goto('/acervo')
+    await expect(page).toHaveURL(/\/minha-senha$/)   // não dá para fugir digitando a rota
+
+    await page.getByLabel('Senha atual').fill(TEMPORARY_PASSWORD)
+    await page.getByLabel('Nova senha', { exact: true }).fill(PASSWORD)
+    await page.getByLabel('Repita a nova senha').fill(PASSWORD)
+    await page.getByRole('button', { name: 'Trocar senha' }).click()
+    await expect(page.getByRole('heading', { name: 'Minha área', level: 1 })).toBeVisible()
+
+    const { id } = (await created.json()) as { id: number }
+    const reset = await request.post(`/api/v1/users/${id}/password`, {
+      data: { newPassword: TEMPORARY_PASSWORD },
+      headers: { Authorization: `Bearer ${admin}` },
+    })
+    expect(reset.status()).toBe(204)
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Acervo' }).click()
+    await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()   // o servidor recusou o token antigo
   })
 
   test('cinco senhas erradas bloqueiam o login, mesmo com a senha certa depois', async ({ page, request }) => {

@@ -50,6 +50,7 @@ test('equipe: cadastra autor, obra, leitor, empresta e devolve — tudo pela int
 
   // 4) empréstimo no balcão: exemplar de consulta nem aparece; só o emprestável
   await nav.getByRole('link', { name: 'Balcão' }).click()
+  await page.getByLabel('Leitor: buscar por nome, e-mail ou matrícula', { exact: true }).fill(readerEmail)
   await page.getByLabel('Leitor', { exact: true }).selectOption({ label: `${readerName} (${readerEmail})` })
   await page.getByLabel('Buscar obra pelo título').fill(title)
   await page.getByRole('button', { name: 'Buscar' }).click()
@@ -60,7 +61,8 @@ test('equipe: cadastra autor, obra, leitor, empresta e devolve — tudo pela int
   await expect(page.getByText('Empréstimo registrado')).toBeVisible()
 
   // 5) a lista de em andamento é paginada: filtra pelo leitor para achar o empréstimo recém-feito
-  await page.getByLabel('Filtrar por leitor').selectOption({ label: `${readerName} (${readerEmail})` })
+  await page.getByLabel('Filtrar por leitor: buscar').fill(readerEmail)
+  await page.getByLabel('Filtrar por leitor', { exact: true }).selectOption({ label: `${readerName} (${readerEmail})` })
   const row = page.getByRole('row', { name: new RegExp(title) })
   await expect(row).toBeVisible()
   await expect(row.getByRole('button', { name: 'Renovar' })).toBeEnabled()

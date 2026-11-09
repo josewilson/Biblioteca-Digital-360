@@ -24,5 +24,5 @@ public record CreateBookRequest(
         Long publisherId,
         Set<Long> authorIds,
         Set<Long> categoryIds,
-        @NotEmpty @Valid List<CopyRequest> copies) {
+        @NotEmpty @Valid List<CopyRequest> copies) implements BookDetails {
 }
