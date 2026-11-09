@@ -15,4 +15,5 @@
 - [x] Pré-produção, passo 6 — Código legado da aula removido
 - [x] Pré-produção, passo 7 — Spring Boot 4.1.2 (Hibernate 7, Spring Security 7, Jackson 3, Testcontainers 2) e SMTP endurecido: tempos limite, autenticação/STARTTLS por variável, recusa de subir mal configurado, rodada de envio para após 3 falhas, `POST /notifications/test`
 - [x] Pré-produção, passo 8 — Teste de carga com k6 (`loadtest/`): 50 usuários simultâneos p95 270 ms, sem erros; saturação ~80 req/s numa instância (ver `docs/PERFORMANCE.md`)
+- [x] Pré-produção, passo 9 — Cópia dos backups para fora do servidor (rclone, ligada por `BACKUP_REMOTE`), contato de privacidade por `PRIVACY_CONTACT` e botão "Enviar e-mail de teste" na tela do administrador
 - [ ] Pré-produção, o que depende de decisão sua: provedor de SMTP (rodar o e-mail de teste com ele), destino da cópia dos backups fora do servidor, domínio para o HTTPS com Let's Encrypt, revisão jurídica do texto de privacidade, alertas

@@ -71,6 +71,34 @@ function PolicyCard({ policy }: { policy: Policy }) {
   )
 }
 
+/** Confere o envio de e-mail de verdade: manda um aviso de teste para o e-mail de quem está logado. */
+function EmailTestCard() {
+  const send = useMutation({ mutationFn: () => api<{ channel: string; to: string }>('/notifications/test', { method: 'POST' }) })
+  return (
+    <Card title="Envio de e-mail">
+      <p className="mb-3 text-sm text-slate-600">
+        Manda um e-mail de teste para o seu endereço. Use depois de configurar o servidor de e-mail, antes de abrir para os leitores.
+      </p>
+      <ErrorAlert error={send.error} />
+      {send.data && send.data.channel === 'smtp' && (
+        <div className="mb-3">
+          <Alert tone="green">E-mail enviado para {send.data.to}. Confira a caixa de entrada (e o spam).</Alert>
+        </div>
+      )}
+      {send.data && send.data.channel !== 'smtp' && (
+        <div className="mb-3">
+          <Alert tone="amber">
+            O canal ligado é "{send.data.channel}": nada foi enviado de verdade. Configure o servidor de e-mail (veja a implantação).
+          </Alert>
+        </div>
+      )}
+      <Button variant="secondary" loading={send.isPending} onClick={() => send.mutate()}>
+        Enviar e-mail de teste para mim
+      </Button>
+    </Card>
+  )
+}
+
 export function PoliciesPage() {
   const list = useQuery({ queryKey: ['policies'], queryFn: () => api<Policy[]>('/policies') })
   return (
@@ -84,6 +112,9 @@ export function PoliciesPage() {
       {list.data && list.data.length === 0 && <Empty>Nenhum perfil com empréstimo configurado.</Empty>}
       <div className="grid gap-6 lg:grid-cols-2">
         {list.data?.map((p) => <PolicyCard key={p.role} policy={p} />)}
+      </div>
+      <div className="mt-6 max-w-xl">
+        <EmailTestCard />
       </div>
     </>
   )

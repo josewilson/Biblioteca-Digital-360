@@ -43,6 +43,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # Atrás do nginx: lê o IP real do cliente (para a auditoria e o bloqueio). Seguro porque a porta 8080 não é publicada.
+      PRIVACY_CONTACT: ${PRIVACY_CONTACT:-}
       SERVER_FORWARD_HEADERS_STRATEGY: framework
       APP_NOTIFICATIONS_CHANNEL: ${APP_NOTIFICATIONS_CHANNEL:-log}
       APP_NOTIFICATIONS_FROM: ${APP_NOTIFICATIONS_FROM:-}

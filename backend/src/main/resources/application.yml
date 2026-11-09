@@ -39,6 +39,8 @@ management:
       enabled: false
 
 app:
+  privacy:
+    contact: ${PRIVACY_CONTACT:}   # texto livre mostrado em /privacidade: encarregado (DPO) e como falar com ele
   notifications:
     smtp:
       auth: ${MAIL_SMTP_AUTH:true}
