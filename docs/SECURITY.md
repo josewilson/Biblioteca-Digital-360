@@ -49,8 +49,8 @@ Revisão feita sobre o código e sobre a pilha rodando em containers. O que foi 
 **Continua em aberto (conhecido, não corrigido):**
 - **Bloqueio por e-mail** permite a alguém trancar a conta de outra pessoa por 15 min (aceito: a alternativa é pior).
 - **Token em `sessionStorage`**: script injetado conseguiria lê-lo.
-- **Sem HTTPS/HSTS no projeto**: precisa de proxy com TLS na frente (ver `DEPLOYMENT.md`).
-- **Sem limite de requisições por IP** no nginx; só o bloqueio de login.
+- **HTTPS é opcional no compose** (`docker-compose.tls.yml`, Caddy com HSTS); sem ele, o tráfego é texto puro. Fora da sua máquina, use-o ou outro proxy com TLS (ver `DEPLOYMENT.md`).
+- **Limite de requisições só no login** (30/min por IP, resposta 429); as demais rotas dependem do token.
 - **Política de senha** só exige 8 caracteres (sem lista de senhas comuns).
 - **Imagens de capa externas** são carregadas direto do endereço informado (o navegador do leitor contata esse servidor).
 - **Ações do GitHub** usam tags de versão (`@v7`, `@v6`), não SHA fixo.

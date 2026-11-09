@@ -18,7 +18,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
 - Código **legado** da aula (Cap 04): `Livro`, `Leitor`, `Biblioteca`, `CalculadoraDeMulta`, com 11 testes. Será substituído aos poucos.
 
-**Ainda não existe:** OpenAPI/Swagger, recuperação de senha por e-mail (a equipe redefine pela tela de usuários), HTTPS embutido (precisa de proxy com certificado), exclusão de obra e envio de imagem de capa.
+**Ainda não existe:** OpenAPI/Swagger, recuperação de senha por e-mail (a equipe redefine pela tela de usuários), HTTPS embutido no site (existe um proxy opcional, `docker-compose.tls.yml`, ainda não testado com domínio público), exclusão de obra e envio de imagem de capa.
 
 ## Tecnologias
 Backend: Java 21 · Spring Boot 3.5.16 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.
@@ -36,7 +36,7 @@ JWT_SECRET=texto-aleatorio-com-32-ou-mais-caracteres
 ADMIN_EMAIL=seu-email@exemplo.com      # só no 1º start: cria o SUPER_ADMIN
 ADMIN_PASSWORD=senha-do-administrador  # só no 1º start (mínimo 8 caracteres)
 ```
-Variáveis: `JWT_SECRET` (obrigatória, ≥ 32 caracteres), `DB_PASSWORD` (obrigatória, **sem valor padrão**), `ADMIN_EMAIL`/`ADMIN_PASSWORD` (cria o 1º SUPER_ADMIN), `DB_URL` (padrão `jdbc:postgresql://localhost:5433/biblioteca`; a porta padrão fica em `application.yml`) e `DB_USER` (padrão `biblioteca`). O `docker compose up -d` publica o banco na mesma porta padrão (mude com `DB_PORT`) e só para a própria máquina (127.0.0.1).
+Opcionais no `.env`: `WEB_PORT`, `WEB_BIND`, `DOMAIN` (HTTPS) e `BACKUP_KEEP_DAYS` (ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)). Variáveis: `JWT_SECRET` (obrigatória, ≥ 32 caracteres), `DB_PASSWORD` (obrigatória, **sem valor padrão**), `ADMIN_EMAIL`/`ADMIN_PASSWORD` (cria o 1º SUPER_ADMIN), `DB_URL` (padrão `jdbc:postgresql://localhost:5433/biblioteca`; a porta padrão fica em `application.yml`) e `DB_USER` (padrão `biblioteca`). O `docker compose up -d` publica o banco na mesma porta padrão (mude com `DB_PORT`) e só para a própria máquina (127.0.0.1).
 
 ## Executar
 Banco: `docker compose up -d`

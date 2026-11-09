@@ -1,0 +1,6 @@
+# Proxy HTTPS (Caddy): pede e renova o certificado sozinho (Let's Encrypt). DOMAIN vem do .env.
+{$DOMAIN} {
+	encode gzip
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	reverse_proxy web:80
+}

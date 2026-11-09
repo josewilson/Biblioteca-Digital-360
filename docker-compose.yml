@@ -2,6 +2,14 @@
 # Aplicação completa (banco + backend + web):     docker compose --profile full up -d --build
 # Depois abra http://localhost:3000 (porta mude com WEB_PORT). Variáveis: veja o LEIA-ME.md.
 name: biblioteca-digital-360   # fixa o nome do projeto: renomear a pasta não troca containers nem volume
+
+# Logs com rotação: sem isto o log do Docker cresce até encher o disco.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -20,6 +28,8 @@ services:
       timeout: 3s
       retries: 10
     restart: unless-stopped
+    mem_limit: 512m          # ajuste ao servidor
+    logging: *logging
 
   backend:
     profiles: ["full"]
@@ -44,15 +54,56 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    mem_limit: 768m          # a JVM usa 75% disso (MaxRAMPercentage); ajuste ao servidor
+    logging: *logging
+
+  # Backup diário do banco (formato custom do pg_dump) no volume "backups". Guarda BACKUP_KEEP_DAYS dias (padrão 14).
+  # O volume está no mesmo servidor: copie os arquivos para fora dele (docs/DEPLOYMENT.md).
+  backup:
+    profiles: ["full"]
+    image: postgres:16-alpine
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER:-biblioteca}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: biblioteca
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        while true; do
+          f=/backups/biblioteca-$$(date +%Y-%m-%d-%H%M).dump
+          pg_dump -Fc -f "$$f.tmp" && mv "$$f.tmp" "$$f" && echo "backup ok: $$f" || echo "BACKUP FALHOU" >&2
+          find /backups -name 'biblioteca-*.dump' -mtime +"$$BACKUP_KEEP_DAYS" -delete
+          sleep 86400
+        done
+    volumes:
+      - backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 128m
+    logging: *logging
 
   web:
     profiles: ["full"]
     build: ./frontend
     ports:
-      - "${WEB_PORT:-3000}:80"
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-3000}:80"   # com HTTPS (docker-compose.tls.yml), use WEB_BIND=127.0.0.1
     depends_on:
       - backend
+    environment:
+      LOGIN_RATE: ${LOGIN_RATE:-30r/m}   # tentativas de login por IP; só o ambiente de teste de ponta a ponta sobe isto
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    mem_limit: 128m
+    logging: *logging
 
 volumes:
   pgdata:
+  backups:
