@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 COPY nginx/templates /etc/nginx/templates
 ENV LOGIN_RATE=30r/m
 COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
