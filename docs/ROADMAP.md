@@ -10,4 +10,5 @@
 - [x] Pré-produção, passo 1 — Troca e redefinição de senha, senha temporária, revogação imediata de sessão, edição de obra/exemplar/usuário/cadastros, reativação de usuário, regras de empréstimo pela tela, busca sem acento (índices trigram, V9), seletores com busca no servidor
 - [x] Pré-produção, passo 2 — Dependências: nginx 1.29; Dependabot não propõe mais Spring Boot de versão maior nem a imagem do Maven (o projeto fica no Java 21). **A migração para o Spring Boot 4 continua pendente** (o PR do Dependabot falhava no CI)
 - [x] Pré-produção, passo 3 — Ambiente: HTTPS opcional (Caddy + HSTS), IP real atrás do proxy, limite de login por IP, limites de memória e rotação de logs, backup diário com teste de restauração, `/healthz`. **Não validado:** certificado Let's Encrypt com domínio público
-- [ ] Pré-produção, próximos passos — SMTP real (testar com o provedor escolhido), cópia dos backups para fora do servidor, alertas, LGPD
+- [x] Pré-produção, passo 4 — LGPD: exportar os próprios dados e os de um usuário, anonimizar com bloqueio por pendências, retenção de 90 dias das tentativas de login, página `/privacidade` (ver `docs/LGPD.md`). **Pendente:** texto jurídico revisado, encarregado (DPO), retenção de contas inativas
+- [ ] Pré-produção, próximos passos — SMTP real (testar com o provedor escolhido), cópia dos backups para fora do servidor, alertas

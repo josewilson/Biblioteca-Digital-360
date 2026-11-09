@@ -154,3 +154,23 @@ test.describe('acessibilidade (axe) — leitor', () => {
     await audit(page, info, 'acesso-negado')
   })
 })
+
+test.describe('acessibilidade (axe) — privacidade', () => {
+  test('página pública e, logado, o download dos próprios dados', async ({ page, request }, info) => {
+    await page.goto('/privacidade')
+    await heading(page)
+    await expect(page.getByText('Entre no sistema para baixar os seus dados.')).toBeVisible()
+    await audit(page, info, 'privacidade-publica')
+
+    const admin = await apiLogin(request, ADMIN.email, ADMIN.password)
+    const reader = await seedReader(request, admin, 'STUDENT', 'Privacidade Axe')
+    await uiLogin(page, reader.email, PASSWORD)
+    await page.goto('/privacidade')
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Baixar meus dados' }).click(),
+    ])
+    expect(download.suggestedFilename()).toBe('meus-dados.json')
+    await audit(page, info, 'privacidade-logado')
+  })
+})

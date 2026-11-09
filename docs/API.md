@@ -12,6 +12,9 @@ Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
 | `PUT /users/{id}` | equipe, só quem ela pode administrar | edita dados e perfis; `cpf`: null mantém, vazio apaga |
 | `POST /users/{id}/password` | equipe, só quem ela pode administrar | define senha temporária; o dono troca ao entrar |
 | `DELETE /users/{id}`, `POST /users/{id}/reactivate` | administradores | desativa / reativa (não a própria conta) |
+| `GET /users/{id}/export` | administradores | baixa todos os dados pessoais do usuário (JSON, inclui CPF); fica na auditoria |
+| `POST /users/{id}/anonymize` | administradores | LGPD: apaga a identidade (irreversível). 422 com empréstimo, multa ou reserva em aberto (ver `LGPD.md`) |
+| `GET /me/data` | autenticado | baixa os próprios dados pessoais (JSON) |
 | `GET /policies`, `PUT /policies/{perfil}` | administradores | regras de empréstimo e multa por dia, de cada perfil que empresta |
 | `POST /authors`, `/publishers`, `/categories` | equipe | cadastra (editora e categoria: nome único) |
 | `PUT /authors/{id}`, `/publishers/{id}`, `/categories/{id}` | equipe | renomeia |

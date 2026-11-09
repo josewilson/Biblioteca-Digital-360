@@ -9,7 +9,7 @@ Meta: projeto de portfólio com qualidade profissional. Origem: projeto de aula 
 que continua no código como **legado** (pacote raiz `br.com.biblioteca`) até ser substituído pelos módulos novos.
 
 ## 2. Estado real (atualize ao concluir cada fase)
-- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
+- **Feito:** Fases 1 a 6 e a maior parte da Fase 7: revisão de segurança (docs/SECURITY.md), revisão de desempenho (docs/PERFORMANCE.md), Docker (backend, site e compose), testes de ponta a ponta com Playwright + axe, GitHub Actions e Dependabot (rodando no GitHub). Depois: LGPD (exportar e anonimizar dados, `/privacidade`), troca e redefinição de senha, revogação imediata de sessão, edição de obra, exemplar, usuário e cadastros de apoio, regras de empréstimo pela tela, busca sem acento com índices. Esquema em V1-V9.
 - **Não feito:** OpenAPI/Swagger, recuperação de senha por e-mail, HTTPS embutido, teste de carga, teste manual com leitor de tela, exclusão de obra, upload de capa.
 - Nunca documente como pronto o que não existe.
 
@@ -49,7 +49,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 - **Controller:** recebe/valida DTO, chama service, devolve DTO. Nada de regra.
 - **Service:** regra de negócio e transação (`@Transactional`).
 - **Domain:** invariantes que não dependem de framework.
-- **Repository:** só acesso a dados (Spring Data). Sem regra. Exceção: `report` e `notification` usam SQL (`JdbcTemplate`) para agregações de leitura e para a fila de avisos; SQL sempre fixo, nunca montado com texto do usuário.
+- **Repository:** só acesso a dados (Spring Data). Sem regra. Exceção: `report`, `notification` e `user/PersonalDataStore` (LGPD) usam SQL (`JdbcTemplate`) para agregações de leitura e para a fila de avisos; SQL sempre fixo, nunca montado com texto do usuário.
 
 ## 8. Entidades, DTOs, endpoints
 - Entidade JPA nunca sai pela API; use DTO (`record` permitido em DTOs).
@@ -63,7 +63,7 @@ Cada módulo futuro: `api` (controller, DTO) → `application` (service, regras)
 ## 10. Segurança
 - Sem segredo no código: tudo por variável de ambiente (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `ADMIN_*`, `spring.mail.*`). `DB_PASSWORD` e `JWT_SECRET` **não têm valor padrão** (a aplicação não sobe sem eles). `.env` e `.env.example` ficam fora do Git (decisão do usuário): as variáveis estão descritas no LEIA-ME.md.
 - Perfis: SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT, TEACHER, STUDENT, EMPLOYEE, VISITOR. Autorização na Fase 3.
-- LGPD: coletar só o necessário (CPF opcional).
+- LGPD: coletar só o necessário (CPF opcional). Exportar (`/me/data`, `/users/{id}/export`) e anonimizar (`/users/{id}/anonymize`) estão em `user/PersonalDataStore`: **dado pessoal novo em qualquer tabela entra na exportação e na limpeza de lá**. Detalhes em `docs/LGPD.md`.
 
 ## 11. Banco
 - Mudança de esquema **só** por nova migração `V<n>__descricao.sql`. Nunca edite migração já aplicada.

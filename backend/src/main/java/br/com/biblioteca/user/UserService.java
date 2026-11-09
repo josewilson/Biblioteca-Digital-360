@@ -1,6 +1,7 @@
 package br.com.biblioteca.user;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,8 +28,11 @@ public class UserService {
     private final RoleRepository roles;
     private final PasswordEncoder encoder;
     private final AuditService audit;
+    private final PersonalDataStore personalData;
 
-    public UserService(UserRepository users, RoleRepository roles, PasswordEncoder encoder, AuditService audit) {
+    UserService(UserRepository users, RoleRepository roles, PasswordEncoder encoder, AuditService audit,
+                PersonalDataStore personalData) {
+        this.personalData = personalData;
         this.users = users;
         this.roles = roles;
         this.encoder = encoder;
@@ -148,6 +152,35 @@ public class UserService {
         checkCanAssign(roleCodes(user), callerRoles);
         user.deactivate();
         audit.record(callerId, "USER_DEACTIVATED", "user", id, null, ip);
+    }
+
+    /** Direito de acesso (LGPD): os dados da própria pessoa ou, pela administração, de quem pediu. */
+    @Transactional
+    public Map<String, Object> export(Long id, Long callerId, String ip) {
+        find(id);
+        audit.record(callerId, "DATA_EXPORTED", "user", id, null, ip);
+        return personalData.export(id);
+    }
+
+    /** Direito de eliminação (LGPD). Irreversível; só sem pendências, para não perder a cobrança nem o empréstimo. */
+    @Transactional
+    public void anonymize(Long id, Set<String> callerRoles, Long callerId, String ip) {
+        if (id.equals(callerId)) {
+            throw new BusinessRuleException("Você não pode anonimizar a própria conta.");
+        }
+        User user = find(id);
+        checkCanAssign(roleCodes(user), callerRoles);
+        if (user.isAnonymized()) {
+            throw new BusinessRuleException("Este usuário já foi anonimizado.");
+        }
+        String pending = personalData.openObligation(id);
+        if (pending != null) {
+            throw new BusinessRuleException("Não é possível anonimizar: o usuário " + pending + ".");
+        }
+        String oldEmail = user.getEmail();
+        user.anonymize();
+        personalData.scrub(id, oldEmail);
+        audit.record(callerId, "USER_ANONYMIZED", "user", id, null, ip);
     }
 
     @Transactional

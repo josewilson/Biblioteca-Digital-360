@@ -21,6 +21,8 @@ import jakarta.persistence.Table;
 @Table(name = "users")
 public class User {
 
+    private static final String ANONYMOUS_DOMAIN = "anonimo.invalid";   // .invalid nunca resolve: nenhum aviso sai
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -79,6 +81,24 @@ public class User {
         passwordHash = newHash;
         mustChangePassword = mustChangeNext;
         tokenVersion++;
+    }
+
+    /** LGPD: troca a identidade por um marcador e fecha a conta. O histórico (empréstimos, multas) fica, sem nome. */
+    public void anonymize() {
+        fullName = "Usuário anonimizado";
+        email = "anonimizado-" + id + "@" + ANONYMOUS_DOMAIN;
+        passwordHash = null;
+        cpf = null;
+        registration = null;
+        phone = null;
+        address = null;
+        mustChangePassword = false;
+        tokenVersion++;
+        deactivate();
+    }
+
+    public boolean isAnonymized() {
+        return email.endsWith("@" + ANONYMOUS_DOMAIN);
     }
 
     public void requirePasswordChange() {

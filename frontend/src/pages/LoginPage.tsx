@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../lib/auth'
 import { loginSchema, type LoginForm } from '../schemas'
 import { Button, ErrorAlert, Field, inputClass } from '../components/ui'
@@ -56,6 +56,11 @@ export function LoginPage() {
         <Button type="submit" className="w-full" loading={isSubmitting}>
           Entrar
         </Button>
+        <p className="text-center text-sm">
+          <Link to="/privacidade" className="font-medium text-brand-700 underline">
+            Privacidade e seus dados
+          </Link>
+        </p>
       </form>
     </main>
   )

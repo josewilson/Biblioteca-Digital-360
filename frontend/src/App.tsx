@@ -10,6 +10,7 @@ import { Loading } from './components/ui'
 import { BookDetailPage } from './pages/BookDetailPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { PoliciesPage } from './pages/PoliciesPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { BooksPage } from './pages/BooksPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CounterPage } from './pages/CounterPage'
@@ -41,6 +42,7 @@ const staff = (element: React.ReactNode) => <RequireRole roles={STAFF_ROLES}>{el
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
+  { path: '/privacidade', element: <PrivacyPage /> },
   {
     element: <RequireAuth />,
     children: [

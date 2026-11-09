@@ -10,6 +10,7 @@ import {
   Menu,
   Receipt,
   Scale,
+  ShieldCheck,
   Tags,
   UserRound,
   Users,
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
   { to: '/regras', label: 'Regras de empréstimo', icon: Scale, adminOnly: true },
   { to: '/minha-area', label: 'Minha área', icon: UserRound },
   { to: '/minha-senha', label: 'Minha senha', icon: KeyRound },
+  { to: '/privacidade', label: 'Privacidade', icon: ShieldCheck },
 ]
 
 /** Só deixa passar quem está logado; senão manda para o login e volta depois. */

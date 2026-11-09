@@ -124,3 +124,56 @@ describe('regras de empréstimo', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso negado')
   })
 })
+
+describe('privacidade (LGPD)', () => {
+  it('a página abre sem login e não oferece o download dos dados', async () => {
+    mockFetch({})
+    renderApp('/privacidade')
+
+    expect(await screen.findByRole('heading', { name: 'Privacidade e seus dados' })).toBeInTheDocument()
+    expect(screen.getByText('Entre no sistema para baixar os seus dados.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Baixar meus dados' })).not.toBeInTheDocument()
+  })
+
+  it('logado, o botão baixa os próprios dados com o token', async () => {
+    tokenStore.set(fakeJwt(['STUDENT']))
+    const { calls } = mockFetch({ 'GET /api/v1/me/data': () => ({ profile: {} }) })
+    URL.createObjectURL = vi.fn(() => 'blob:x')
+    URL.revokeObjectURL = vi.fn()
+    renderApp('/privacidade')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Baixar meus dados' }))
+
+    await waitFor(() => expect(calls.some((c) => c.key === 'GET /api/v1/me/data')).toBe(true))
+  })
+
+  it('administrador anonimiza só depois de confirmar o aviso de que não tem volta', async () => {
+    tokenStore.set(fakeJwt(['ADMIN_INSTITUTION']))
+    const student = { id: 2, fullName: 'Ana Souza', email: 'ana@x.com', registration: null, phone: null, active: true, roles: ['STUDENT'], createdAt: '2026-01-01T00:00:00Z' }
+    const { calls } = mockFetch({
+      'GET /api/v1/users': () => page([student]),
+      'POST /api/v1/users/2/anonymize': () => undefined,
+    })
+    renderApp('/usuarios')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Anonimizar Ana Souza' }))
+    expect(await screen.findByText('Não dá para desfazer.')).toBeInTheDocument()
+    expect(calls.some((c) => c.key === 'POST /api/v1/users/2/anonymize')).toBe(false)
+
+    await user.click(screen.getByRole('button', { name: 'Anonimizar' }))
+    await waitFor(() => expect(calls.some((c) => c.key === 'POST /api/v1/users/2/anonymize')).toBe(true))
+  })
+
+  it('bibliotecário não vê exportar nem anonimizar', async () => {
+    tokenStore.set(STAFF_JWT)
+    const student = { id: 2, fullName: 'Ana Souza', email: 'ana@x.com', registration: null, phone: null, active: true, roles: ['STUDENT'], createdAt: '2026-01-01T00:00:00Z' }
+    mockFetch({ 'GET /api/v1/users': () => page([student]) })
+    renderApp('/usuarios')
+
+    await screen.findByRole('button', { name: 'Editar Ana Souza' })
+    expect(screen.queryByRole('button', { name: 'Anonimizar Ana Souza' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Exportar dados de Ana Souza' })).not.toBeInTheDocument()
+  })
+})

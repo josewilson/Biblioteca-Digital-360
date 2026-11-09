@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
-import { api } from '../lib/api'
+import { api, downloadFile } from '../lib/api'
 import { hasAnyRole, useAuth, type AuthUser } from '../lib/auth'
 import { formatDate } from '../lib/format'
 import { ALL_ROLES, ROLE_LABELS, type Page, type Role, type UserRow } from '../lib/types'
@@ -233,6 +233,7 @@ export function UsersPage() {
   const [editing, setEditing] = useState<UserRow | null>(null)
   const [resetting, setResetting] = useState<UserRow | null>(null)
   const [deactivating, setDeactivating] = useState<UserRow | null>(null)
+  const [anonymizing, setAnonymizing] = useState<UserRow | null>(null)
 
   const assignable = assignableRoles(user)
   const canManage = (u: UserRow) => u.roles.every((r) => assignable.includes(r))
@@ -250,6 +251,16 @@ export function UsersPage() {
       setDeactivating(null)
       refresh()
     },
+  })
+  const anonymize = useMutation({
+    mutationFn: (u: UserRow) => api<void>(`/users/${u.id}/anonymize`, { method: 'POST' }),
+    onSuccess: () => {
+      setAnonymizing(null)
+      refresh()
+    },
+  })
+  const exportData = useMutation({
+    mutationFn: (u: UserRow) => downloadFile(`/users/${u.id}/export`, {}, `dados-usuario-${u.id}.json`),
   })
   const reactivate = useMutation({
     mutationFn: (u: UserRow) => api<UserRow>(`/users/${u.id}/reactivate`, { method: 'POST' }),
@@ -289,6 +300,7 @@ export function UsersPage() {
         {list.isLoading && <Loading />}
         <ErrorAlert error={list.error} />
         <ErrorAlert error={reactivate.error} />
+        <ErrorAlert error={exportData.error} />
         {list.data && list.data.content.length === 0 && <Empty>Nenhum usuário encontrado.</Empty>}
         {list.data && list.data.content.length > 0 && (
           <>
@@ -312,6 +324,21 @@ export function UsersPage() {
                         {isAdmin && u.active && u.id !== user?.id && (
                           <Button variant="secondary" onClick={() => setDeactivating(u)}>
                             Desativar
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            aria-label={`Exportar dados de ${u.fullName}`}
+                            loading={exportData.isPending && exportData.variables?.id === u.id}
+                            onClick={() => exportData.mutate(u)}
+                          >
+                            Exportar dados
+                          </Button>
+                        )}
+                        {isAdmin && u.id !== user?.id && (
+                          <Button variant="ghost" aria-label={`Anonimizar ${u.fullName}`} onClick={() => setAnonymizing(u)}>
+                            Anonimizar
                           </Button>
                         )}
                         {isAdmin && !u.active && (
@@ -356,6 +383,25 @@ export function UsersPage() {
         error={deactivate.error}
         onConfirm={() => deactivating && deactivate.mutate(deactivating)}
         onCancel={() => setDeactivating(null)}
+      />
+      <ConfirmDialog
+        open={anonymizing !== null}
+        title="Anonimizar usuário"
+        message={
+          anonymizing && (
+            <>
+              Anonimizar <strong>{anonymizing.fullName}</strong>? Nome, e-mail, CPF, telefone, endereço, avisos e IPs são
+              apagados e a conta é fechada. Empréstimos e multas continuam no histórico, sem identificar a pessoa.{' '}
+              <strong>Não dá para desfazer.</strong> Só é possível sem empréstimo, multa ou reserva em aberto.
+            </>
+          )
+        }
+        confirmLabel="Anonimizar"
+        danger
+        loading={anonymize.isPending}
+        error={anonymize.error}
+        onConfirm={() => anonymizing && anonymize.mutate(anonymizing)}
+        onCancel={() => setAnonymizing(null)}
       />
     </>
   )
