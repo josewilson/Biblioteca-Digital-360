@@ -28,7 +28,7 @@ O nginx passa a confiar no `X-Forwarded-For` do Caddy (só da rede interna do co
 Testado com `DOMAIN=localhost` (certificado interno do Caddy): HTTPS, HSTS e redirecionamento de http. **Não testado com domínio público e Let's Encrypt.** Se preferir outro proxy (Traefik, balanceador da nuvem), ele precisa enviar HSTS e `X-Forwarded-For`, e o `deploy/real-ip-proxy.conf` deve listar a rede dele.
 
 ## E-mail
-Por padrão os avisos só vão para o log. Para enviar de verdade: `APP_NOTIFICATIONS_CHANNEL=smtp`, `APP_NOTIFICATIONS_FROM` e `SPRING_MAIL_HOST/PORT/USERNAME/PASSWORD` no `.env`. **Não testado contra servidor real.**
+Por padrão os avisos só vão para o log. Para enviar de verdade: `APP_NOTIFICATIONS_CHANNEL=smtp`, `APP_NOTIFICATIONS_FROM` e `SPRING_MAIL_HOST/PORT/USERNAME/PASSWORD` no `.env`. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
 
 ## Dados e backup
 O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um dump por dia em `/backups` (volume `backups`) e apaga os com mais de `BACKUP_KEEP_DAYS` dias (padrão 14). O primeiro dump sai logo ao subir e pode estar vazio se o backend ainda não tiver migrado o banco; o seguinte já vem completo.
