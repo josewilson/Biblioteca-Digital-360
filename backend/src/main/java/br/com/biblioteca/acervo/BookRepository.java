@@ -19,6 +19,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             union select c.book.id from BookCopy c where c.barcode = :exact
             """;
 
+    /** Ids das obras cujo ISBN (ignorando hífen e espaço, como foi digitado) é um dos informados. */
+    @Query("select b.id from Book b where replace(replace(b.isbn, '-', ''), ' ', '') in :isbns order by b.id")
+    java.util.List<Long> findIdsByIsbnIn(@Param("isbns") java.util.Collection<String> isbns);
+
     boolean existsByIsbn(String isbn);
 
     boolean existsByIsbnAndIdNot(String isbn, Long id);
