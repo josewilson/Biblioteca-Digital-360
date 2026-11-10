@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**", "/api/v1/authors",
                                 "/api/v1/publishers", "/api/v1/categories").authenticated()
                         .requestMatchers("/api/v1/fines/*/waive").hasAnyRole(Access.WAIVER_ROLES)
-                        .requestMatchers("/api/v1/policies/**").hasAnyRole(Access.ADMIN_ROLES)
+                        .requestMatchers("/api/v1/policies/**", "/api/v1/openapi/**", "/api/v1/openapi").hasAnyRole(Access.ADMIN_ROLES)
                         .requestMatchers("/api/v1/books/**", "/api/v1/copies/**", "/api/v1/authors/**",
                                 "/api/v1/publishers/**", "/api/v1/categories/**", "/api/v1/users/**", "/api/v1/loans/**",
                                 "/api/v1/reservations/**", "/api/v1/fines/**", "/api/v1/payments/**", "/api/v1/dashboard", "/api/v1/reports/**")

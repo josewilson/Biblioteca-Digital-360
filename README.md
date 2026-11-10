@@ -15,7 +15,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-178%20backend%20%C2%B7%20107%20frontend%20%C2%B7%2033%20E2E-2ea44f)
+![Testes](https://img.shields.io/badge/testes-181%20backend%20%C2%B7%20109%20frontend%20%C2%B7%2033%20E2E-2ea44f)
 ![Acessibilidade](https://img.shields.io/badge/acessibilidade-axe%20no%20CI-5a2d82)
 
 </div>
@@ -255,8 +255,8 @@ Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-ma
 
 ## Testes e qualidade
 ```bash
-cd backend && ./mvnw verify                                 # backend: 178 testes (com PostgreSQL real via Testcontainers)
-cd frontend && npm test                         # frontend: 107 testes
+cd backend && ./mvnw verify                                 # backend: 181 testes (com PostgreSQL real via Testcontainers)
+cd frontend && npm test                         # frontend: 109 testes
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 33 testes de ponta a ponta + axe
 ```
 O CI roda três jobs: **backend**, **frontend** (tipos, testes, build e `npm audit`) e **ponta a ponta** (pilha completa em
@@ -287,6 +287,6 @@ ambiente · containers sem root · banco publicado apenas em `127.0.0.1`. Revis�
 | [AGENTS.md](AGENTS.md) | Convenções para contribuir (pessoas e IA) |
 
 ## Limitações conhecidas
-Não existem ainda: OpenAPI/Swagger, HTTPS embutido (use um proxy com certificado),
-e exclusão de obra. A busca de capa pelo ISBN usa a Open Library e depende de o servidor alcançar a internet. O teste de carga (`loadtest/`) cobre só leituras. Entrega de avisos pressupõe **uma única
+Não existem ainda: interface Swagger UI (a especificação OpenAPI em JSON existe), HTTPS embutido (use um proxy com certificado).
+A busca de capa pelo ISBN usa a Open Library e depende de o servidor alcançar a internet. O teste de carga (`loadtest/`) cobre só leituras. Entrega de avisos pressupõe **uma única
 instância** do backend. O envio por SMTP é testado contra um servidor local (Mailpit), não contra o seu provedor. Lista completa no [roadmap](docs/ROADMAP.md).

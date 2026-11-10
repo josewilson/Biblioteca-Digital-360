@@ -17,7 +17,7 @@ empréstimos, devoluções, reservas, renovações, multas, pagamentos e relató
 - Painel gerencial e 8 relatórios (JSON ou CSV) para a equipe; avisos por e-mail (canal configurável) para empréstimo, vencimento, atraso, reserva, multa e pagamento.
 - Interface web (pasta `frontend/`): login, painel com gráficos, acervo, balcão (empréstimo, devolução, renovação), reservas, multas (pagamento com comprovante e isenção), relatórios com CSV, usuários, cadastros de apoio e área do próprio leitor. Menus e botões mudam conforme o perfil.
 
-**Ainda não existe:** OpenAPI/Swagger, HTTPS embutido no site (existe um proxy opcional, `docker-compose.tls.yml`, ainda não testado com domínio público), e exclusão de obra.
+**Ainda não existe:** interface Swagger UI (a especificação OpenAPI em JSON existe, só para administrador, em `GET /api/v1/openapi`) e HTTPS embutido no site (existe um proxy opcional, `docker-compose.tls.yml`, ainda não testado com domínio público).
 
 ## Tecnologias
 Backend: Java 21 · Spring Boot 4.1.2 · Spring Security (JWT) · Spring Data JPA · PostgreSQL 16 · Flyway · Actuator · JUnit 5 · Testcontainers · Maven.

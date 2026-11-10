@@ -75,6 +75,17 @@ public class BookService {
     }
 
     @Transactional
+    public void delete(Long id, Long callerId, String ip) {
+        Book book = findBook(id);
+        if (books.hasHistory(id)) {
+            throw new BusinessRuleException(
+                    "Esta obra tem empréstimos ou reservas no histórico e não pode ser excluída. Baixe os exemplares para tirá-la de circulação.");
+        }
+        books.delete(book);   // exemplares em cascata; capa pelo banco
+        audit.record(callerId, "BOOK_DELETED", "book", id, "titulo=" + book.getTitle(), ip);
+    }
+
+    @Transactional
     public CopyResponse updateCopy(Long copyId, UpdateCopyRequest req, Long callerId, String ip) {
         BookCopy copy = findCopy(copyId);
         String barcode = req.barcode().trim();
