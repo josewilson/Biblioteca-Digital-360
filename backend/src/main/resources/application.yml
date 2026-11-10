@@ -51,6 +51,11 @@ app:
   covers:
     # Serviço de capas por ISBN (%s = o ISBN). Vazio desliga a busca automática.
     lookup-url: ${COVER_LOOKUP_URL:https://covers.openlibrary.org/b/isbn/%s-L.jpg?default=false}
+  isbn:
+    # Consulta de dados do livro pelo ISBN no formulário da obra (%s = o ISBN de 13 dígitos). Só o ISBN sai do servidor.
+    brasilapi-url: https://brasilapi.com.br/api/isbn/v1/%s
+    openlibrary-url: https://openlibrary.org/isbn/%s.json
+    timeout: 5s   # por provedor
   privacy:
     contact: ${PRIVACY_CONTACT:}   # texto livre mostrado em /privacidade: encarregado (DPO) e como falar com ele
   notifications:

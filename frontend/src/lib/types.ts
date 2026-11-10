@@ -189,3 +189,26 @@ export interface ReportTable {
   rows: unknown[][]
   truncated: boolean
 }
+
+/** Item de uma sugestão por ISBN: com id já existe no cadastro; sem id é só um nome sugerido. */
+export interface SuggestedName {
+  id: number | null
+  name: string
+}
+
+/** Resposta de GET /books/isbn/{isbn}: sugestão para preencher o formulário. Nada disto está salvo. */
+export interface IsbnSuggestion {
+  isbn: string
+  alreadyRegistered: boolean
+  existingBookId: number | null
+  title: string | null
+  edition: string | null
+  publicationYear: number | null
+  language: string | null
+  description: string | null
+  coverUrl: string | null
+  publisher: SuggestedName | null
+  authors: SuggestedName[]
+  categories: SuggestedName[]
+  sources: Record<string, string>
+}

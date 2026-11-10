@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Book } from './lib/types'
 import { BookForm } from './components/BookForm'
@@ -546,5 +546,171 @@ describe('busca de capa pelo ISBN', () => {
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(found))
     expect(calls.map((c) => c.key).filter((k) => k.startsWith('POST'))).toEqual(['POST /api/v1/books', 'POST /api/v1/books/1/cover/lookup'])
+  })
+})
+
+describe('busca de dados pelo ISBN no cadastro', () => {
+  const ISBN_PATH = 'GET /api/v1/books/isbn/9788545702870'
+  const found = {
+    isbn: '9788545702870', alreadyRegistered: false, existingBookId: null, title: 'Akira', edition: null, publicationYear: 2017,
+    language: 'Português', description: 'Um marco da ficção científica.', coverUrl: 'https://covers.openlibrary.org/b/id/1-L.jpg',
+    publisher: { id: 5, name: 'Japorama' },
+    authors: [{ id: 9, name: 'Katsuhiro Otomo' }, { id: null, name: 'Drik Sada' }],
+    categories: [{ id: 3, name: 'Mangá' }, { id: null, name: 'Ficção científica' }],
+    sources: { title: 'brasilapi', language: 'openlibrary' },
+  }
+
+  /** Cadastros de apoio com estado: o POST de um nome novo o põe na lista seguinte. */
+  function api(extra: Record<string, (init: RequestInit) => unknown> = {}) {
+    const lists: Record<string, { id: number; name: string }[]> = {
+      publishers: [{ id: 5, name: 'Japorama' }],
+      authors: [{ id: 9, name: 'Katsuhiro Otomo' }],
+      categories: [{ id: 3, name: 'Mangá' }],
+    }
+    const handlers: Record<string, (init: RequestInit) => unknown> = { [ISBN_PATH]: () => found }
+    for (const kind of Object.keys(lists)) {
+      handlers[`GET /api/v1/${kind}`] = () => [...lists[kind]!]
+      handlers[`POST /api/v1/${kind}`] = (init) => {
+        const item = { id: lists[kind]!.length + 20, name: (JSON.parse(String(init.body)) as { name: string }).name }
+        lists[kind]!.push(item)
+        return item
+      }
+    }
+    return { ...handlers, ...extra }
+  }
+
+  async function search(isbn = '9788545702870') {
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('ISBN'), isbn)
+    await user.click(screen.getByRole('button', { name: 'Buscar por ISBN' }))
+    return user
+  }
+
+  it('preenche os campos vazios, escolhe o cadastrado, mostra a prévia da capa e não salva nada', async () => {
+    const { calls } = mockFetch(api({ 'GET /api/v1/books/isbn/978-85-4570-287-0': () => found }))   // o ISBN vai como foi digitado
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Buscar por ISBN' })).toBeDisabled()   // sem ISBN
+    await search('978-85-4570-287-0')
+
+    await waitFor(() => expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Akira'))
+    expect((screen.getByLabelText('Ano de publicação') as HTMLInputElement).value).toBe('2017')
+    expect((screen.getByLabelText('Idioma') as HTMLInputElement).value).toBe('Português')
+    expect((screen.getByLabelText('Descrição') as HTMLTextAreaElement).value).toBe('Um marco da ficção científica.')
+    expect((screen.getByLabelText('ISBN') as HTMLInputElement).value).toBe('9788545702870')   // sem hífen
+    expect((screen.getByLabelText('Editora') as HTMLSelectElement).selectedOptions[0]?.textContent).toBe('Japorama')
+    expect(await screen.findByLabelText('Katsuhiro Otomo')).toBeChecked()
+    expect(screen.getByLabelText('Mangá')).toBeChecked()
+    expect(screen.getByAltText('Prévia da capa pelo endereço informado')).toHaveAttribute('src', found.coverUrl)
+    expect(screen.getByText(/Dados encontrados \(BrasilAPI e Open Library\)/)).toBeInTheDocument()
+    expect(calls.some((c) => c.key === 'POST /api/v1/books')).toBe(false)   // nada foi salvo
+  })
+
+  it('não sobrescreve o que o usuário digitou: pergunta e só troca se ele confirmar', async () => {
+    mockFetch(api())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('Título'), 'Meu título')
+    await search()
+
+    expect(await screen.findByText(/«Meu título» → «Akira»/)).toBeInTheDocument()
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Meu título')
+    expect((screen.getByLabelText('Idioma') as HTMLInputElement).value).toBe('Português')   // o vazio foi preenchido
+
+    await user.click(screen.getByRole('button', { name: 'Trocar título pelo sugerido' }))
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Akira')
+    expect(screen.queryByText(/«Meu título»/)).not.toBeInTheDocument()
+  })
+
+  it('"Manter tudo como está" descarta as trocas sugeridas', async () => {
+    mockFetch(api())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('Título'), 'Meu título')
+    await search()
+
+    await user.click(await screen.findByRole('button', { name: 'Manter tudo como está' }))
+    expect(screen.queryByRole('button', { name: 'Trocar título pelo sugerido' })).not.toBeInTheDocument()
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Meu título')
+  })
+
+  it('autor e categoria novos viram botões: nada é cadastrado até o clique, e o clique cadastra e marca', async () => {
+    const { calls } = mockFetch(api())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = await search()
+
+    const author = await screen.findByRole('button', { name: 'Adicionar autor «Drik Sada»' })
+    expect(calls.some((c) => c.key.startsWith('POST'))).toBe(false)
+
+    await user.click(author)
+    await waitFor(() => expect(screen.getByLabelText('Drik Sada')).toBeChecked())
+    expect(screen.queryByRole('button', { name: 'Adicionar autor «Drik Sada»' })).not.toBeInTheDocument()
+    expect(JSON.parse(String(calls.find((c) => c.key === 'POST /api/v1/authors')!.init.body))).toEqual({ name: 'Drik Sada' })
+
+    await user.click(screen.getByRole('button', { name: 'Adicionar categoria «Ficção científica»' }))
+    await waitFor(() => expect(screen.getByLabelText('Ficção científica')).toBeChecked())
+    expect(screen.getByLabelText('Katsuhiro Otomo')).toBeChecked()   // a seleção anterior continua
+    expect(calls.some((c) => c.key === 'POST /api/v1/books')).toBe(false)
+  })
+
+  it('editora nova vira botão e, ao cadastrar, fica escolhida', async () => {
+    mockFetch(api({ [ISBN_PATH]: () => ({ ...found, publisher: { id: null, name: 'Editora Inédita' } }) }))
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = await search()
+
+    await user.click(await screen.findByRole('button', { name: 'Adicionar editora «Editora Inédita»' }))
+    const select = screen.getByLabelText('Editora') as HTMLSelectElement
+    await waitFor(() => expect(select.selectedOptions[0]?.textContent).toBe('Editora Inédita'))
+  })
+
+  it('obra já cadastrada: avisa, leva à obra e não preenche nada', async () => {
+    mockFetch(api({ [ISBN_PATH]: () => ({ ...found, alreadyRegistered: true, existingBookId: 7, title: null, sources: {} }) }))
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    await search()
+
+    expect(await screen.findByText(/Já existe uma obra com este ISBN/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Abrir a obra existente/ })).toHaveAttribute('href', '/acervo/7')
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('')
+  })
+
+  it.each([
+    [400, 'ISBN inválido: informe 10 ou 13 dígitos com o dígito verificador correto.'],
+    [404, 'Nenhuma base de livros conhece o ISBN 9788545702870. Preencha manualmente.'],
+    [503, 'Não foi possível consultar as bases de livros agora. Preencha manualmente.'],
+  ])('mostra a mensagem do servidor no erro %i e deixa preencher à mão', async (status, detail) => {
+    mockFetch(api({ [ISBN_PATH]: () => problem(status, detail) }))
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    await search()
+
+    expect(await screen.findByText(detail)).toBeInTheDocument()
+    expect(screen.getByLabelText('Título')).toBeEnabled()
+  })
+
+  it('Enter no campo ISBN busca em vez de cadastrar a obra', async () => {
+    const { calls } = mockFetch(api())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('ISBN'), '9788545702870{Enter}')
+
+    await waitFor(() => expect(calls.some((c) => c.key === ISBN_PATH)).toBe(true))
+    expect(calls.some((c) => c.key === 'POST /api/v1/books')).toBe(false)
+  })
+
+  it('imagem do endereço que não carrega mostra aviso em vez de ficar quebrada', async () => {
+    mockFetch(api())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Endereço da imagem da capa'), 'https://exemplo.test/capa.jpg')
+    fireEvent.error(screen.getByAltText('Prévia da capa pelo endereço informado'))
+
+    expect(await screen.findByText('Não foi possível carregar a imagem deste endereço.')).toBeInTheDocument()
+    expect(screen.queryByAltText('Prévia da capa pelo endereço informado')).not.toBeInTheDocument()
+  })
+
+  it('na edição não há botão de busca (a obra já existe)', async () => {
+    mockFetch(api())
+    renderWithProviders(<BookForm book={domCasmurro as unknown as Book} onSaved={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Buscar por ISBN' })).not.toBeInTheDocument()
   })
 })
