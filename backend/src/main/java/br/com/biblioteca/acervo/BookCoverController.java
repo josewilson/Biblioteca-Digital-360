@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,9 +30,18 @@ import jakarta.servlet.http.HttpServletRequest;
 public class BookCoverController {
 
     private final BookCoverService service;
+    private final BookCoverLookup lookup;
 
-    public BookCoverController(BookCoverService service) {
+    public BookCoverController(BookCoverService service, BookCoverLookup lookup) {
         this.service = service;
+        this.lookup = lookup;
+    }
+
+    /** Busca a capa pelo ISBN já salvo na obra (Open Library) e a grava como se tivesse sido enviada. */
+    @PostMapping("/lookup")
+    @PreAuthorize(Access.STAFF)
+    public BookResponse lookup(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
+        return lookup.fetchAndStore(id, Long.valueOf(auth.getName()), http.getRemoteAddr());
     }
 
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -486,3 +486,65 @@ describe('autor e categoria no cadastro da obra', () => {
     expect(await screen.findByText('Já existe autor com este nome.')).toBeInTheDocument()
   })
 })
+
+describe('busca de capa pelo ISBN', () => {
+  const lookups = {
+    'GET /api/v1/authors': () => [],
+    'GET /api/v1/publishers': () => [],
+    'GET /api/v1/categories': () => [],
+  }
+  const withIsbn = { ...domCasmurro, isbn: '9788535910663', publisherId: null } as unknown as Book
+
+  it('na edição, o botão busca a capa do ISBN salvo e mostra a nova imagem na hora', async () => {
+    const { calls } = mockFetch({ ...lookups, 'POST /api/v1/books/1/cover/lookup': () => ({ ...withIsbn, coverVersion: 42 }) })
+    renderWithProviders(<BookForm book={withIsbn} onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    expect(document.querySelector('img')).toBeNull()   // ainda sem capa
+    await user.click(screen.getByRole('button', { name: 'Buscar capa pelo ISBN' }))
+
+    await waitFor(() => expect(document.querySelector('img')?.getAttribute('src')).toBe('/api/v1/books/1/cover?size=thumb&v=42'))
+    expect(calls.some((c) => c.key === 'POST /api/v1/books/1/cover/lookup')).toBe(true)
+  })
+
+  it('só busca com o ISBN já salvo: se o campo mudou, pede para salvar antes', async () => {
+    mockFetch(lookups)
+    renderWithProviders(<BookForm book={withIsbn} onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.clear(screen.getByLabelText('ISBN'))
+    expect(screen.getByRole('button', { name: 'Buscar capa pelo ISBN' })).toBeDisabled()
+    await user.type(screen.getByLabelText('ISBN'), '9780140328721')
+    expect(screen.getByRole('button', { name: 'Buscar capa pelo ISBN' })).toBeDisabled()
+    expect(screen.getByText('Salve a obra com o novo ISBN antes de buscar.')).toBeInTheDocument()
+  })
+
+  it('mostra a mensagem do servidor quando não há capa para o ISBN', async () => {
+    mockFetch({ ...lookups, 'POST /api/v1/books/1/cover/lookup': () => problem(422, 'Nenhuma capa encontrada para o ISBN 9788535910663. Envie a imagem.') })
+    renderWithProviders(<BookForm book={withIsbn} onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: 'Buscar capa pelo ISBN' }))
+
+    expect(await screen.findByText(/Nenhuma capa encontrada para o ISBN/)).toBeInTheDocument()
+  })
+
+  it('no cadastro, a opção só aparece com ISBN e a busca roda depois de salvar a obra', async () => {
+    const onCreated = vi.fn()
+    const found = { ...domCasmurro, coverVersion: 7 }
+    const { calls } = mockFetch({ ...lookups, 'POST /api/v1/books': () => domCasmurro, 'POST /api/v1/books/1/cover/lookup': () => found })
+    renderWithProviders(<BookForm onSaved={onCreated} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    expect(screen.queryByLabelText('Buscar a capa pelo ISBN ao cadastrar')).toBeNull()
+    await user.type(screen.getByLabelText('Título'), 'Dom Casmurro')
+    await user.type(screen.getByLabelText('ISBN'), '9788535910663')
+    await user.type(screen.getByLabelText('Código do exemplar 1'), 'C-1')
+    await user.type(screen.getByLabelText('Código do exemplar 2'), 'E-1')
+    await user.click(screen.getByLabelText('Buscar a capa pelo ISBN ao cadastrar'))
+    await user.click(screen.getByRole('button', { name: 'Cadastrar obra' }))
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith(found))
+    expect(calls.map((c) => c.key).filter((k) => k.startsWith('POST'))).toEqual(['POST /api/v1/books', 'POST /api/v1/books/1/cover/lookup'])
+  })
+})

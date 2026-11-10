@@ -55,6 +55,7 @@ Revisão feita sobre o código e sobre a pilha rodando em containers. O que foi 
 - **Limite de requisições só no login** (30/min por IP, resposta 429); as demais rotas dependem do token.
 - **Política de senha** só exige 8 caracteres (sem lista de senhas comuns).
 - **Capa enviada:** só JPEG/PNG, até 2 MB (nginx 3 MB) e 8000 px de lado, 25 milhões de pixels no total (conferido antes de decodificar, contra "bomba de descompressão"); o servidor decodifica e regrava em JPEG, o que remove metadados e qualquer conteúdo escondido no arquivo. O envio é da equipe; a leitura é pública de propósito (a capa de um livro não é dado sensível e `<img>` não envia token).
+- **Busca de capa por ISBN (saída do servidor):** o endereço do serviço vem da configuração, nunca do usuário; o ISBN é limitado a 10 ou 13 caracteres numéricos (no ISBN-10 o último pode ser X) antes de entrar na URL. Redirecionamentos são conferidos um a um (no máximo 3) e só seguem para o mesmo servidor, `openlibrary.org` ou `archive.org`, por HTTPS (impede usar o servidor para alcançar a rede interna). Conexão 5 s, resposta 10 s, imagem até 2 MB; o resultado passa pelas mesmas validações do envio manual.
 - **Imagens de capa externas** são carregadas direto do endereço informado (o navegador do leitor contata esse servidor).
 - **Ações do GitHub** usam tags de versão (`@v7`, `@v6`), não SHA fixo.
 - Não foi feito teste de intrusão, análise estática (SAST) nem varredura de dependências do backend (Maven); o Dependabot está configurado para avisar.
