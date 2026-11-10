@@ -391,3 +391,45 @@ describe('capa da obra', () => {
     expect(imgs[0]!.getAttribute('alt')).toBe('')   // decorativa: o título está ao lado
   })
 })
+
+describe('editora no cadastro da obra', () => {
+  function publishersApi() {
+    const list: { id: number; name: string }[] = []
+    return {
+      'GET /api/v1/authors': () => [],
+      'GET /api/v1/categories': () => [],
+      'GET /api/v1/publishers': () => [...list],
+      'POST /api/v1/publishers': (init: RequestInit) => {
+        const item = { id: list.length + 1, name: (JSON.parse(String(init.body)) as { name: string }).name }
+        list.push(item)
+        return item
+      },
+    }
+  }
+
+  it('cadastra a editora no próprio formulário e já a deixa escolhida, sem salvar a obra', async () => {
+    const { calls } = mockFetch(publishersApi())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    expect(screen.getByRole('button', { name: 'Cadastrar editora' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Nova editora'), '  Companhia das Letras {Enter}')
+
+    const select = screen.getByLabelText('Editora') as HTMLSelectElement
+    await waitFor(() => expect(select.selectedOptions[0]?.textContent).toBe('Companhia das Letras'))
+    expect(JSON.parse(String(calls.find((c) => c.key === 'POST /api/v1/publishers')!.init.body))).toEqual({ name: 'Companhia das Letras' })
+    expect(calls.some((c) => c.key === 'POST /api/v1/books')).toBe(false)   // Enter não salvou a obra
+    expect((screen.getByLabelText('Nova editora') as HTMLInputElement).value).toBe('')
+  })
+
+  it('mostra a recusa do servidor quando a editora já existe', async () => {
+    mockFetch({ ...publishersApi(), 'POST /api/v1/publishers': () => problem(422, 'Já existe editora com este nome.') })
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Nova editora'), 'Garnier')
+    await user.click(screen.getByRole('button', { name: 'Cadastrar editora' }))
+
+    expect(await screen.findByText('Já existe editora com este nome.')).toBeInTheDocument()
+  })
+})
