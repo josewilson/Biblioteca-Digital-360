@@ -4,9 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
-import type { Book, NameItem } from '../lib/types'
+import type { Book, IsbnSuggestion, NameItem } from '../lib/types'
 import { bookSchema, toBookRequest, type BookForm as BookFormValues } from '../schemas'
 import { BookCover } from './BookCover'
+import { IsbnReview, type Conflict, type NewKind, type Review } from './IsbnReview'
 import { CheckGroup } from './pickers'
 import { Alert, Button, ErrorAlert, Field, inputClass } from './ui'
 
@@ -22,21 +23,28 @@ interface LookupKind {
   button: string       // "Cadastrar editora"
 }
 
+/** Cadastra uma editora, autor ou categoria e recarrega a lista; `onCreated` recebe o item e o nome enviado. */
+function useCreateNamed(path: LookupKind['path'], onCreated: (item: NameItem, name: string) => void) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => api<NameItem>(path, { method: 'POST', body: { name: name.trim() } }),
+    onSuccess: (item, name) => {
+      void queryClient.invalidateQueries({ queryKey: [path.slice(1)] })
+      onCreated(item, name)
+    },
+  })
+}
+
 /**
  * Cadastra um item de apoio sem sair do formulário da obra. Não é um <form> (já estamos dentro de um): Enter cria o item, não salva a obra.
  */
 function NewLookup({ kind, onCreated }: { kind: LookupKind; onCreated: (item: NameItem) => void }) {
-  const queryClient = useQueryClient()
   const [name, setName] = useState('')
-  const create = useMutation({
-    mutationFn: () => api<NameItem>(kind.path, { method: 'POST', body: { name: name.trim() } }),
-    onSuccess: (item) => {
-      setName('')
-      void queryClient.invalidateQueries({ queryKey: [kind.path.slice(1)] })
-      onCreated(item)
-    },
+  const create = useCreateNamed(kind.path, (item) => {
+    setName('')
+    onCreated(item)
   })
-  const submit = () => name.trim() && create.mutate()
+  const submit = () => name.trim() && create.mutate(name)
 
   return (
     <div className="space-y-2">
@@ -174,6 +182,103 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
   const selectAuthor = useSelectWhenListed(authors.data, (id) => setValue('authorIds', [...getValues('authorIds'), String(id)]))
   const selectCategory = useSelectWhenListed(categories.data, (id) => setValue('categoryIds', [...getValues('categoryIds'), String(id)]))
 
+  // ----- busca de dados pelo ISBN (só no cadastro; não grava nada: o usuário revisa e salva pelo fluxo normal) -----
+  const [review, setReview] = useState<Review | null>(null)
+  const replacers = useRef<Record<string, () => void>>({})   // o que fazer ao confirmar a troca de cada campo
+  const [coverBroken, setCoverBroken] = useState<string | null>(null)
+  const coverUrlValue = watch('coverUrl').trim()
+
+  const dropNew = (kind: NewKind, name: string) =>
+    setReview((r) =>
+      r && {
+        ...r,
+        newPublisher: kind === 'publisher' && r.newPublisher === name ? null : r.newPublisher,
+        newAuthors: kind === 'author' ? r.newAuthors.filter((n) => n !== name) : r.newAuthors,
+        newCategories: kind === 'category' ? r.newCategories.filter((n) => n !== name) : r.newCategories,
+      },
+    )
+  const addPublisher = useCreateNamed('/publishers', (item, name) => {
+    selectPublisher(item.id)
+    dropNew('publisher', name)
+  })
+  const addAuthor = useCreateNamed('/authors', (item, name) => {
+    selectAuthor(item.id)
+    dropNew('author', name)
+  })
+  const addCategory = useCreateNamed('/categories', (item, name) => {
+    selectCategory(item.id)
+    dropNew('category', name)
+  })
+  const creating: { kind: NewKind; name: string } | null = addPublisher.isPending
+    ? { kind: 'publisher', name: addPublisher.variables }
+    : addAuthor.isPending
+      ? { kind: 'author', name: addAuthor.variables }
+      : addCategory.isPending
+        ? { kind: 'category', name: addCategory.variables }
+        : null
+
+  function applySuggestion(found: IsbnSuggestion) {
+    const sources = [...new Set(Object.values(found.sources))]
+    const none = { newPublisher: null, newAuthors: [], newCategories: [] }
+    if (found.alreadyRegistered) {
+      return setReview({ existingBookId: found.existingBookId, sources, conflicts: [], ...none })   // duplicado: não preenche nada
+    }
+    const opts = { shouldDirty: true, shouldValidate: true }
+    const conflicts: Conflict[] = []
+    // Campo vazio é preenchido; campo com valor diferente só é trocado se o usuário confirmar.
+    const offer = (key: string, label: string, current: string, suggested: string, apply: () => void) => {
+      if (!current) return apply()
+      if (current !== suggested) {
+        conflicts.push({ key, label, current, suggested })
+        replacers.current[key] = apply
+      }
+    }
+    const scalar = (field: 'title' | 'edition' | 'publicationYear' | 'language' | 'description' | 'coverUrl', label: string, value: string | number | null) => {
+      if (value == null || value === '') return
+      const suggested = String(value)
+      offer(field, label, getValues(field).trim(), suggested, () => setValue(field, suggested, opts))
+    }
+    scalar('title', 'Título', found.title)
+    scalar('publicationYear', 'Ano de publicação', found.publicationYear)
+    scalar('edition', 'Edição', found.edition)
+    scalar('language', 'Idioma', found.language)
+    scalar('description', 'Descrição', found.description)
+    scalar('coverUrl', 'Endereço da capa', found.coverUrl)
+
+    if (found.publisher?.id != null) {
+      const id = String(found.publisher.id)
+      const current = getValues('publisherId')
+      if (current !== id) {
+        const currentName = publishers.data?.find((p) => String(p.id) === current)?.name ?? current
+        offer('publisherId', 'Editora', current ? currentName : '', found.publisher.name, () => setValue('publisherId', id, opts))
+      }
+    }
+    // Autores e categorias já cadastrados só são somados à seleção (nada é desmarcado).
+    const known = (list: IsbnSuggestion['authors']) => list.filter((x) => x.id != null).map((x) => String(x.id))
+    setValue('authorIds', [...new Set([...getValues('authorIds'), ...known(found.authors)])], opts)
+    setValue('categoryIds', [...new Set([...getValues('categoryIds'), ...known(found.categories)])], opts)
+    if (getValues('isbn').trim() !== found.isbn) setValue('isbn', found.isbn, opts)   // mesmo ISBN, só sem hífen
+
+    const unknown = (list: IsbnSuggestion['authors']) => list.filter((x) => x.id == null).map((x) => x.name)
+    setReview({
+      existingBookId: null,
+      sources,
+      conflicts,
+      newPublisher: found.publisher && found.publisher.id == null ? found.publisher.name : null,
+      newAuthors: unknown(found.authors),
+      newCategories: unknown(found.categories),
+    })
+  }
+
+  const importIsbn = useMutation({
+    mutationFn: () => api<IsbnSuggestion>(`/books/isbn/${encodeURIComponent(isbn)}`),
+    onMutate: () => {
+      setReview(null)
+      replacers.current = {}
+    },
+    onSuccess: applySuggestion,
+  })
+
   const save = useMutation({
     mutationFn: async (values: BookFormValues) => {
       let saved = book
@@ -219,9 +324,31 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="ISBN" error={errors.isbn?.message}>
-          {(p) => <input {...p} className={inputClass} {...register('isbn')} />}
-        </Field>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-40 flex-1">
+            <Field label="ISBN" error={errors.isbn?.message}>
+              {(p) => (
+                <input
+                  {...p}
+                  className={inputClass}
+                  {...register('isbn')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !book) {   // Enter no ISBN busca, não cadastra a obra
+                      e.preventDefault()
+                      if (isbn && !importIsbn.isPending) importIsbn.mutate()
+                    }
+                  }}
+                />
+              )}
+            </Field>
+          </div>
+          {!book && (
+            <Button variant="secondary" loading={importIsbn.isPending} disabled={!isbn} onClick={() => importIsbn.mutate()}>
+              <Search className="h-4 w-4" aria-hidden="true" />
+              Buscar por ISBN
+            </Button>
+          )}
+        </div>
         <Field label="Ano de publicação" error={errors.publicationYear?.message}>
           {(p) => <input {...p} inputMode="numeric" className={inputClass} {...register('publicationYear')} />}
         </Field>
@@ -232,6 +359,25 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
           {(p) => <input {...p} className={inputClass} {...register('language')} />}
         </Field>
       </div>
+
+      {!book && <ErrorAlert error={importIsbn.error} />}
+      {!book && review && (
+        <IsbnReview
+          review={review}
+          creating={creating}
+          errors={[addPublisher.error, addAuthor.error, addCategory.error].filter(Boolean)}
+          onReplace={(key) => {
+            replacers.current[key]?.()
+            delete replacers.current[key]
+            setReview((r) => r && { ...r, conflicts: r.conflicts.filter((c) => c.key !== key) })
+          }}
+          onKeep={() => {
+            replacers.current = {}
+            setReview((r) => r && { ...r, conflicts: [] })
+          }}
+          onAdd={(kind, name) => (kind === 'publisher' ? addPublisher : kind === 'author' ? addAuthor : addCategory).mutate(name)}
+        />
+      )}
 
       <Field label="Editora">
         {(p) => (
@@ -303,9 +449,25 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
           )}
         </div>
       </div>
-      <Field label="Endereço da imagem da capa" hint="Opcional. Só é usado quando não há capa enviada." error={errors.coverUrl?.message}>
-        {(p) => <input {...p} type="url" className={inputClass} {...register('coverUrl')} />}
-      </Field>
+      <div className="flex items-start gap-3">
+        {/^https?:\/\/\S+$/i.test(coverUrlValue) && coverUrlValue !== coverBroken && (
+          <img
+            src={coverUrlValue}
+            alt="Prévia da capa pelo endereço informado"
+            referrerPolicy="no-referrer"
+            onError={() => setCoverBroken(coverUrlValue)}
+            className="h-24 w-16 shrink-0 rounded border border-slate-200 object-cover"
+          />
+        )}
+        <div className="flex-1 space-y-1">
+          <Field label="Endereço da imagem da capa" hint="Opcional. Só é usado quando não há capa enviada." error={errors.coverUrl?.message}>
+            {(p) => <input {...p} type="url" className={inputClass} {...register('coverUrl')} />}
+          </Field>
+          {coverUrlValue !== '' && coverUrlValue === coverBroken && (
+            <p className="text-xs text-red-700">Não foi possível carregar a imagem deste endereço.</p>
+          )}
+        </div>
+      </div>
 
       {!book && (
       <fieldset className="space-y-3 rounded-md border border-slate-200 p-3">
