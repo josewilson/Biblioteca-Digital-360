@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { BookCover } from '../components/BookCover'
@@ -129,8 +129,10 @@ function EditCopyForm({ copy, bookId, onClose }: { copy: Copy; bookId: number; o
 export function BookDetailPage() {
   const { id } = useParams()
   const bookId = Number(id)
-  const { isStaff } = useAuth()
+  const { isStaff, isAdmin } = useAuth()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [deleting, setDeleting] = useState(false)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editingCopy, setEditingCopy] = useState<Copy | null>(null)
@@ -151,6 +153,15 @@ export function BookDetailPage() {
     },
   })
 
+  const remove = useMutation({
+    mutationFn: () => api<void>(`/books/${bookId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['books'] })
+      queryClient.removeQueries({ queryKey: ['book', bookId] })
+      navigate('/acervo')
+    },
+  })
+
   const reserve = useMutation({
     mutationFn: () => api<Reservation>('/me/reservations', { method: 'POST', body: { bookId } }),
   })
@@ -168,6 +179,11 @@ export function BookDetailPage() {
           .join(', ')}
         actions={
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Button variant="secondary" onClick={() => setDeleting(true)}>
+                Excluir obra
+              </Button>
+            )}
             {isStaff && (
               <Button variant="secondary" onClick={() => setEditing(true)}>
                 Editar obra
@@ -292,6 +308,17 @@ export function BookDetailPage() {
       <Dialog open={editingCopy !== null} title="Editar exemplar" onClose={() => setEditingCopy(null)}>
         {editingCopy && <EditCopyForm copy={editingCopy} bookId={bookId} onClose={() => setEditingCopy(null)} />}
       </Dialog>
+      <ConfirmDialog
+        open={deleting}
+        title="Excluir obra"
+        message={<>Excluir <strong>{book.title}</strong> e todos os seus exemplares? Não dá para desfazer. Obra com empréstimo ou reserva no histórico não pode ser excluída.</>}
+        confirmLabel="Excluir"
+        danger
+        loading={remove.isPending}
+        error={remove.error}
+        onConfirm={() => remove.mutate()}
+        onCancel={() => { setDeleting(false); remove.reset() }}
+      />
       <ConfirmDialog
         open={pending !== null}
         title="Alterar situação do exemplar"
