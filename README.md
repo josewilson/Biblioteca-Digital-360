@@ -287,6 +287,6 @@ ambiente · containers sem root · banco publicado apenas em `127.0.0.1`. Revis�
 | [AGENTS.md](AGENTS.md) | Convenções para contribuir (pessoas e IA) |
 
 ## Limitações conhecidas
-Não existem ainda: OpenAPI/Swagger, HTTPS embutido (use um proxy com certificado),
+Não existem ainda: interface Swagger UI (a especificação OpenAPI em JSON existe), HTTPS embutido (use um proxy com certificado).
 A busca de capa pelo ISBN usa a Open Library e depende de o servidor alcançar a internet. O teste de carga (`loadtest/`) cobre só leituras. Entrega de avisos pressupõe **uma única
 instância** do backend. O envio por SMTP é testado contra um servidor local (Mailpit), não contra o seu provedor. Lista completa no [roadmap](docs/ROADMAP.md).
