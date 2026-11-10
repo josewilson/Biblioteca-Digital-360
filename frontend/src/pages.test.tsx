@@ -433,3 +433,56 @@ describe('editora no cadastro da obra', () => {
     expect(await screen.findByText('Já existe editora com este nome.')).toBeInTheDocument()
   })
 })
+
+describe('autor e categoria no cadastro da obra', () => {
+  function lookupsApi() {
+    const lists: Record<string, { id: number; name: string }[]> = { authors: [{ id: 1, name: 'Machado de Assis' }], categories: [] }
+    const handlers: Record<string, (init: RequestInit) => unknown> = {
+      'GET /api/v1/publishers': () => [],
+    }
+    for (const kind of ['authors', 'categories']) {
+      handlers[`GET /api/v1/${kind}`] = () => [...lists[kind]!]
+      handlers[`POST /api/v1/${kind}`] = (init) => {
+        const item = { id: lists[kind]!.length + 10, name: (JSON.parse(String(init.body)) as { name: string }).name }
+        lists[kind]!.push(item)
+        return item
+      }
+    }
+    return handlers
+  }
+
+  it('cadastra um autor novo e o marca, sem desmarcar o que já estava escolhido', async () => {
+    const { calls } = mockFetch(lookupsApi())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByLabelText('Machado de Assis'))
+    await user.type(screen.getByLabelText('Novo autor'), 'Clarice Lispector{Enter}')
+
+    await waitFor(() => expect(screen.getByLabelText('Clarice Lispector')).toBeChecked())
+    expect(screen.getByLabelText('Machado de Assis')).toBeChecked()
+    expect(calls.some((c) => c.key === 'POST /api/v1/books')).toBe(false)
+  })
+
+  it('cadastra uma categoria nova e a marca', async () => {
+    mockFetch(lookupsApi())
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Nova categoria'), 'Romance')
+    await user.click(screen.getByRole('button', { name: 'Cadastrar categoria' }))
+
+    await waitFor(() => expect(screen.getByLabelText('Romance')).toBeChecked())
+  })
+
+  it('mostra a recusa do servidor quando o autor já existe', async () => {
+    mockFetch({ ...lookupsApi(), 'POST /api/v1/authors': () => problem(422, 'Já existe autor com este nome.') })
+    renderWithProviders(<BookForm onSaved={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Novo autor'), 'Machado de Assis')
+    await user.click(screen.getByRole('button', { name: 'Cadastrar autor' }))
+
+    expect(await screen.findByText('Já existe autor com este nome.')).toBeInTheDocument()
+  })
+})

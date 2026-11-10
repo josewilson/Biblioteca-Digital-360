@@ -15,18 +15,25 @@ const COVER_MAX_BYTES = 2 * 1024 * 1024
 
 const EMPTY_COPY = { barcode: '', kind: 'CIRCULANTE', condition: 'BOM', location: '' } as const
 
+/** Qual cadastro de apoio o campo "novo" cria (editora, autor ou categoria). */
+interface LookupKind {
+  path: '/publishers' | '/authors' | '/categories'
+  label: string        // "Nova editora"
+  button: string       // "Cadastrar editora"
+}
+
 /**
- * Cadastra uma editora sem sair do formulário da obra. Não é um <form> (já estamos dentro de um): Enter cria a editora, não salva a obra.
+ * Cadastra um item de apoio sem sair do formulário da obra. Não é um <form> (já estamos dentro de um): Enter cria o item, não salva a obra.
  */
-function NewPublisher({ onCreated }: { onCreated: (publisher: NameItem) => void }) {
+function NewLookup({ kind, onCreated }: { kind: LookupKind; onCreated: (item: NameItem) => void }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const create = useMutation({
-    mutationFn: () => api<NameItem>('/publishers', { method: 'POST', body: { name: name.trim() } }),
-    onSuccess: (publisher) => {
+    mutationFn: () => api<NameItem>(kind.path, { method: 'POST', body: { name: name.trim() } }),
+    onSuccess: (item) => {
       setName('')
-      void queryClient.invalidateQueries({ queryKey: ['publishers'] })
-      onCreated(publisher)
+      void queryClient.invalidateQueries({ queryKey: [kind.path.slice(1)] })
+      onCreated(item)
     },
   })
   const submit = () => name.trim() && create.mutate()
@@ -36,7 +43,7 @@ function NewPublisher({ onCreated }: { onCreated: (publisher: NameItem) => void 
       <ErrorAlert error={create.error} />
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <Field label="Nova editora" hint="Não está na lista? Digite o nome e cadastre.">
+          <Field label={kind.label} hint="Não está na lista? Digite o nome e cadastre.">
             {(p) => (
               <input
                 {...p}
@@ -56,11 +63,30 @@ function NewPublisher({ onCreated }: { onCreated: (publisher: NameItem) => void 
         </div>
         <Button variant="secondary" loading={create.isPending} disabled={!name.trim()} onClick={submit}>
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Cadastrar editora
+          {kind.button}
         </Button>
       </div>
     </div>
   )
+}
+
+const PUBLISHER: LookupKind = { path: '/publishers', label: 'Nova editora', button: 'Cadastrar editora' }
+const AUTHOR: LookupKind = { path: '/authors', label: 'Novo autor', button: 'Cadastrar autor' }
+const CATEGORY: LookupKind = { path: '/categories', label: 'Nova categoria', button: 'Cadastrar categoria' }
+
+/**
+ * O item recém-cadastrado só existe nas opções depois que a lista é recarregada; quando chega, `select` o escolhe.
+ * Devolve a função que avisa qual id aguardar.
+ */
+function useSelectWhenListed(list: NameItem[] | undefined, select: (id: number) => void) {
+  const [pending, setPending] = useState<number | null>(null)
+  useEffect(() => {
+    if (pending !== null && list?.some((item) => item.id === pending)) {
+      select(pending)
+      setPending(null)
+    }
+  }, [pending, list, select])
+  return setPending
 }
 
 /** Com `book`, edita os dados da obra; os exemplares têm operações próprias na página da obra. */
@@ -102,6 +128,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
     register,
     control,
     setValue,
+    getValues,
     handleSubmit,
     formState: { errors },
   } = useForm<BookFormValues>({
@@ -129,14 +156,9 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'copies' })
 
-  // A editora recém-cadastrada só vira opção do <select> depois que a lista é recarregada; aí ela é escolhida.
-  const [newPublisherId, setNewPublisherId] = useState<number | null>(null)
-  useEffect(() => {
-    if (newPublisherId !== null && publishers.data?.some((pub) => pub.id === newPublisherId)) {
-      setValue('publisherId', String(newPublisherId))
-      setNewPublisherId(null)
-    }
-  }, [newPublisherId, publishers.data, setValue])
+  const selectPublisher = useSelectWhenListed(publishers.data, (id) => setValue('publisherId', String(id)))
+  const selectAuthor = useSelectWhenListed(authors.data, (id) => setValue('authorIds', [...getValues('authorIds'), String(id)]))
+  const selectCategory = useSelectWhenListed(categories.data, (id) => setValue('categoryIds', [...getValues('categoryIds'), String(id)]))
 
   const save = useMutation({
     mutationFn: async (values: BookFormValues) => {
@@ -208,7 +230,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
         )}
       </Field>
 
-      <NewPublisher onCreated={(pub) => setNewPublisherId(pub.id)} />
+      <NewLookup kind={PUBLISHER} onCreated={(item) => selectPublisher(item.id)} />
 
       <Controller
         control={control}
@@ -217,6 +239,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
           <CheckGroup legend="Autores" options={toOptions(authors.data)} value={field.value} onChange={field.onChange} />
         )}
       />
+      <NewLookup kind={AUTHOR} onCreated={(item) => selectAuthor(item.id)} />
       <Controller
         control={control}
         name="categoryIds"
@@ -224,6 +247,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
           <CheckGroup legend="Categorias" options={toOptions(categories.data)} value={field.value} onChange={field.onChange} />
         )}
       />
+      <NewLookup kind={CATEGORY} onCreated={(item) => selectCategory(item.id)} />
 
       <Field label="Descrição" error={errors.description?.message}>
         {(p) => <textarea {...p} rows={3} className={inputClass} {...register('description')} />}
