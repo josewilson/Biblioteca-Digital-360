@@ -31,6 +31,10 @@ spring:
       pageable:
         max-page-size: 100     # ninguém pede a tabela inteira de uma vez
 
+springdoc:
+  api-docs:
+    path: /api/v1/openapi   # especificação OpenAPI em JSON; só administrador (ver SecurityConfig)
+
 management:
   endpoints:
     web:

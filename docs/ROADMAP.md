@@ -1,11 +1,11 @@
 # Roadmap
 
 - [x] Fase 1 — Diagnóstico, AGENTS.md, LEIA-ME.md
-- [x] Fase 2 — Fundação: Spring Boot, Flyway V1, erros, testes. (Pendente: Dockerfile da aplicação, CI, OpenAPI)
+- [x] Fase 2 — Fundação: Spring Boot, Flyway V1, erros, testes. (Pendente: Dockerfile da aplicação, CI)
 - [x] Fase 3 — Segurança e usuários (JWT, perfis, cadastro). Pendentes em docs/SECURITY.md
 - [x] Fase 4 — Acervo (obras, exemplares, autores, editoras, categorias). Pendentes: exclusão de obra
 - [x] Fase 5 — Empréstimo, devolução, renovação, reservas, multa, pagamento e isenção
-- [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendentes: OpenAPI/Swagger, exclusão de obra
+- [x] Fase 6 — Painel, relatórios, notificações (backend) e interface web React. Pendente: exclusão de obra. Especificação OpenAPI em JSON (`GET /api/v1/openapi`, só administrador); sem Swagger UI
 - [x] Fase 7 — Segurança, desempenho, Docker, E2E (Playwright + axe), CI/Dependabot. **Pendentes:** HTTPS/HSTS (proxy com certificado, opcional no compose), teste com leitor de tela. Teste de carga feito no passo 8 (`loadtest/`)
 - [x] Pré-produção, passo 1 — Troca e redefinição de senha, senha temporária, revogação imediata de sessão, edição de obra/exemplar/usuário/cadastros, reativação de usuário, regras de empréstimo pela tela, busca sem acento (índices trigram, V9), seletores com busca no servidor
 - [x] Pré-produção, passo 2 — Dependências: nginx 1.29; Dependabot não propõe mais Spring Boot de versão maior nem a imagem do Maven (o projeto fica no Java 21). Spring Boot 4.1.2 migrado no passo 7 (o PR do Dependabot falhava no CI)
