@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { Book, NameItem } from '../lib/types'
 import { bookSchema, toBookRequest, type BookForm as BookFormValues } from '../schemas'
@@ -97,6 +97,18 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
   const [cover, setCover] = useState<File | null>(null)
   const [coverError, setCoverError] = useState<string | null>(null)
   const [removeCover, setRemoveCover] = useState(false)
+  const [shown, setShown] = useState(book)         // a obra como a capa está agora (muda quando a busca por ISBN grava uma)
+  const [autoCover, setAutoCover] = useState(false)   // cadastro: buscar a capa pelo ISBN depois de salvar
+  const lookup = useMutation({
+    mutationFn: () => api<Book>(`/books/${book!.id}/cover/lookup`, { method: 'POST' }),
+    onSuccess: (found) => {
+      setShown(found)
+      setRemoveCover(false)
+      setCover(null)
+      void queryClient.invalidateQueries({ queryKey: ['books'] })
+      void queryClient.invalidateQueries({ queryKey: ['book', found.id] })
+    },
+  })
   const [preview, setPreview] = useState<string | null>(null)
   const created = useRef<Book | null>(null)
 
@@ -129,6 +141,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
     control,
     setValue,
     getValues,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<BookFormValues>({
@@ -155,6 +168,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
     },
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'copies' })
+  const isbn = watch('isbn').trim()
 
   const selectPublisher = useSelectWhenListed(publishers.data, (id) => setValue('publisherId', String(id)))
   const selectAuthor = useSelectWhenListed(authors.data, (id) => setValue('authorIds', [...getValues('authorIds'), String(id)]))
@@ -171,6 +185,8 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
         saved = await api<Book>(`/books/${saved.id}/cover`, { method: 'PUT', body: data })
       } else if (removeCover && saved.coverVersion != null) {
         saved = await api<Book>(`/books/${saved.id}/cover`, { method: 'DELETE' })
+      } else if (autoCover && !book) {
+        saved = await api<Book>(`/books/${saved.id}/cover/lookup`, { method: 'POST' })
       }
       return saved
     },
@@ -256,17 +272,34 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
         {preview ? (
           <img src={preview} alt="Prévia da capa escolhida" className="h-24 w-16 shrink-0 rounded border border-slate-200 object-cover" />
         ) : (
-          book && !removeCover && <BookCover book={book} size="thumb" />
+          shown && !removeCover && <BookCover key={shown.coverVersion ?? 'sem'} book={shown} size="thumb" />
         )}
         <div className="flex-1 space-y-2">
-          <Field label="Capa da obra" hint="Opcional. JPEG ou PNG, até 2 MB. O sistema gera a miniatura." error={coverError ?? undefined}>
+          <Field label="Capa da obra" hint="Opcional. JPEG ou PNG, até 2 MB, ou busque pelo ISBN. O sistema gera a miniatura." error={coverError ?? undefined}>
             {(p) => <input {...p} type="file" accept={COVER_TYPES.join(',')} onChange={(e) => pickCover(e.target.files?.[0])} className={inputClass} />}
           </Field>
-          {book?.coverVersion != null && !cover && (
+          {shown?.coverVersion != null && !cover && (
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={removeCover} onChange={(e) => setRemoveCover(e.target.checked)} />
               Remover a capa enviada
             </label>
+          )}
+          {book ? (
+            <div className="space-y-1">
+              <ErrorAlert error={lookup.error} />
+              <Button variant="secondary" loading={lookup.isPending} disabled={!isbn || isbn !== (book.isbn ?? '')} onClick={() => lookup.mutate()}>
+                <Search className="h-4 w-4" aria-hidden="true" />
+                Buscar capa pelo ISBN
+              </Button>
+              {isbn !== (book.isbn ?? '') && isbn && <p className="text-xs text-slate-600">Salve a obra com o novo ISBN antes de buscar.</p>}
+            </div>
+          ) : (
+            isbn && !cover && (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={autoCover} onChange={(e) => setAutoCover(e.target.checked)} />
+                Buscar a capa pelo ISBN ao cadastrar
+              </label>
+            )
           )}
         </div>
       </div>

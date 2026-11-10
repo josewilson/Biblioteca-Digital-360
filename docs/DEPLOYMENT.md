@@ -41,6 +41,9 @@ SPRING_MAIL_PASSWORD=...
 Servidor local sem senha (teste): `MAIL_SMTP_AUTH=false` e `MAIL_SMTP_STARTTLS=false`. O backend **recusa subir** com o canal `smtp` sem host, remetente ou (com autenticação ligada) usuário, para o erro aparecer na hora e não aviso a aviso. Conexão e leitura têm tempo limite (5 s e 10 s): provedor fora do ar não trava o sistema, e depois de 3 falhas seguidas a rodada de envio para e retoma no minuto seguinte.
 **Confira com o provedor de verdade**, logado como administrador: `POST /api/v1/notifications/test` manda um e-mail de teste para o seu endereço e devolve o canal ligado (`log` não envia nada) ou o motivo do erro. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
 
+## Busca de capa pelo ISBN
+O botão "Buscar capa pelo ISBN" faz o **servidor** consultar `covers.openlibrary.org`: o backend precisa de saída para a internet (HTTPS). Só o ISBN sai do servidor, que não é dado pessoal. `COVER_LOOKUP_URL` muda o serviço (`%s` é o ISBN); **vazio desliga a busca** (o envio manual continua). Sem internet, o botão responde "Não foi possível consultar o serviço de capas". Cobertura: a Open Library não tem todos os livros, principalmente edições nacionais e antigas; nesses casos, envie a imagem.
+
 ## Privacidade
 Preencha `PRIVACY_CONTACT` no `.env` com o encarregado (DPO) e o contato, por exemplo `Encarregado: Maria Silva, privacidade@sua-escola.com.br`. Aparece na página pública `/privacidade`. O texto da página é um rascunho do que o sistema faz: peça revisão jurídica antes de abrir (`docs/LGPD.md`).
 
@@ -80,6 +83,7 @@ O banco fica no volume `pgdata`. O serviço `backup` (perfil `full`) grava um du
 - [ ] `ADMIN_EMAIL`/`ADMIN_PASSWORD` removidos do `.env` depois do primeiro acesso
 - [ ] HTTPS ligado (`docker-compose.tls.yml`) e `WEB_BIND=127.0.0.1`
 - [ ] `BACKUP_REMOTE` preenchido (cópia externa) e `scripts/restore-test.sh` aprovado
+- [ ] Busca de capa conferida em produção (botão com um ISBN conhecido) ou desligada com `COVER_LOOKUP_URL=` vazio
 - [ ] `PRIVACY_CONTACT` preenchido e o texto de `/privacidade` revisado por quem responde juridicamente pela instituição
 - [ ] `APP_PUBLIC_URL` com o endereço real e "Esqueci a senha" testado de ponta a ponta (pedir o link, receber, trocar a senha)
 - [ ] E-mail conferido: botão "Enviar e-mail de teste" em Regras de empréstimo (administrador) recebeu a mensagem

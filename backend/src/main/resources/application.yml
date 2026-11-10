@@ -44,6 +44,9 @@ management:
 
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:3000}   # endereço do site nos links dos e-mails (https://seu-dominio em produção)
+  covers:
+    # Serviço de capas por ISBN (%s = o ISBN). Vazio desliga a busca automática.
+    lookup-url: ${COVER_LOOKUP_URL:https://covers.openlibrary.org/b/isbn/%s-L.jpg?default=false}
   privacy:
     contact: ${PRIVACY_CONTACT:}   # texto livre mostrado em /privacidade: encarregado (DPO) e como falar com ele
   notifications:
