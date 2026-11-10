@@ -19,6 +19,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             union select c.book.id from BookCopy c where c.barcode = :exact
             """;
 
+    /** Obra com empréstimo ou reserva (em qualquer época) tem histórico e não pode ser apagada. */
+    @Query(value = """
+            select exists (select 1 from loans l join book_copies c on c.id = l.copy_id where c.book_id = :id)
+                or exists (select 1 from reservations r where r.book_id = :id)
+            """, nativeQuery = true)
+    boolean hasHistory(@Param("id") Long id);
+
     boolean existsByIsbn(String isbn);
 
     boolean existsByIsbnAndIdNot(String isbn, Long id);

@@ -38,7 +38,7 @@ Exemplo de cadastro de obra:
 ```
 **Busca de capa por ISBN:** `POST /books/{id}/cover/lookup` (equipe) consulta a Open Library com o ISBN **já salvo** na obra e grava a imagem como se tivesse sido enviada (mesmas validações, regravada em JPEG). 422 com mensagem clara se a obra não tem ISBN válido, se o serviço não tem capa (`Nenhuma capa encontrada…`) ou se está fora do ar.
 **Capa:** `PUT /books/{id}/cover` (equipe, `multipart/form-data`, campo `file`, JPEG ou PNG até 2 MB e 8000 px de lado) e `DELETE /books/{id}/cover` (equipe) devolvem a obra com `coverVersion` (nulo = sem capa enviada). `GET /books/{id}/cover?size=thumb|full&v=<coverVersion>` é **público** (a tag `<img>` não envia token) e devolve JPEG com cache longo; 404 se não há capa. O servidor regrava a imagem em JPEG (full até 600x900, miniatura até 160x240): o arquivo enviado nunca é guardado nem servido como veio. `coverUrl` (endereço externo) continua valendo quando não há capa enviada.
-Pendente: excluir obra, OpenAPI/Swagger. Tamanho máximo de página: 100. Conflito de unicidade em gravações simultâneas responde 409.
+**Excluir obra:** `DELETE /books/{id}` (administrador) responde 204 e apaga a obra com seus exemplares e a capa. Obra com empréstimo ou reserva no histórico, mesmo devolvido, responde 422: baixe os exemplares para tirá-la de circulação. Pendente: OpenAPI/Swagger. Tamanho máximo de página: 100. Conflito de unicidade em gravações simultâneas responde 409.
 
 ## Balcão (Fase 5, parte 1)
 | Método e caminho | Quem | O que faz |

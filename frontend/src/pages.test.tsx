@@ -289,6 +289,42 @@ describe('acervo para o leitor', () => {
   })
 })
 
+describe('exclusão de obra', () => {
+  it('só o administrador vê o botão; a exclusão pede confirmação e mostra a recusa do servidor', async () => {
+    const { calls } = mockFetch({
+      'GET /api/v1/books/1': () => domCasmurro,
+      'DELETE /api/v1/books/1': () => problem(422, 'Esta obra tem empréstimos ou reservas no histórico e não pode ser excluída.'),
+    })
+    const librarian = renderApp('/acervo/1', ['LIBRARIAN'])
+    await screen.findByRole('button', { name: 'Editar obra' })
+    expect(screen.queryByRole('button', { name: 'Excluir obra' })).not.toBeInTheDocument()
+    librarian.unmount()
+
+    renderApp('/acervo/1', ['ADMIN_INSTITUTION'])
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Excluir obra' }))
+    expect(calls.some((c) => c.key === 'DELETE /api/v1/books/1')).toBe(false)
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Excluir' }))
+
+    expect(await screen.findByText(/histórico e não pode ser excluída/)).toBeInTheDocument()
+  })
+
+  it('exclusão bem-sucedida volta para a lista do acervo', async () => {
+    const { calls } = mockFetch({
+      'GET /api/v1/books/1': () => domCasmurro,
+      'DELETE /api/v1/books/1': () => new Response(null, { status: 204 }),
+      'GET /api/v1/books': () => page([]),
+    })
+    renderApp('/acervo/1', ['ADMIN_INSTITUTION'])
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Excluir obra' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Excluir' }))
+
+    await waitFor(() => expect(calls.some((c) => c.key === 'DELETE /api/v1/books/1')).toBe(true))
+    expect(await screen.findByRole('heading', { name: 'Acervo' })).toBeInTheDocument()
+  })
+})
+
 describe('capa da obra', () => {
   const lookups = {
     'GET /api/v1/authors': () => [{ id: 1, name: 'Machado de Assis' }],

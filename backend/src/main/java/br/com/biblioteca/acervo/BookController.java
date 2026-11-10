@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +51,13 @@ public class BookController {
     public BookResponse update(@PathVariable Long id, @Valid @RequestBody UpdateBookRequest request,
                                Authentication auth, HttpServletRequest http) {
         return service.update(id, request, Long.valueOf(auth.getName()), http.getRemoteAddr());
+    }
+
+    @DeleteMapping("/books/{id}")
+    @PreAuthorize(Access.ADMIN)
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth, HttpServletRequest http) {
+        service.delete(id, Long.valueOf(auth.getName()), http.getRemoteAddr());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/copies/{id}")
