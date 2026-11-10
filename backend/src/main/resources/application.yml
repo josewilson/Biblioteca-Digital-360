@@ -1,6 +1,10 @@
 spring:
   application:
     name: biblioteca-digital-360
+  servlet:
+    multipart:
+      max-file-size: 2MB      # capa da obra
+      max-request-size: 3MB
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/biblioteca}
     username: ${DB_USER:biblioteca}

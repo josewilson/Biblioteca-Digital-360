@@ -37,6 +37,7 @@ public class Book {
     private String language;
     private String description;
     private String coverUrl;
+    private Long coverVersion;   // nulo = sem capa enviada (a imagem fica em book_covers)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
@@ -139,6 +140,14 @@ public class Book {
 
     public String getCoverUrl() {
         return coverUrl;
+    }
+
+    public Long getCoverVersion() {
+        return coverVersion;
+    }
+
+    void setCoverVersion(Long coverVersion) {
+        this.coverVersion = coverVersion;
     }
 
     public Publisher getPublisher() {

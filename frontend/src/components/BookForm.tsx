@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -6,15 +6,93 @@ import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../lib/api'
 import type { Book, NameItem } from '../lib/types'
 import { bookSchema, toBookRequest, type BookForm as BookFormValues } from '../schemas'
+import { BookCover } from './BookCover'
 import { CheckGroup } from './pickers'
 import { Alert, Button, ErrorAlert, Field, inputClass } from './ui'
 
+const COVER_TYPES = ['image/jpeg', 'image/png']
+const COVER_MAX_BYTES = 2 * 1024 * 1024
+
 const EMPTY_COPY = { barcode: '', kind: 'CIRCULANTE', condition: 'BOM', location: '' } as const
+
+/**
+ * Cadastra uma editora sem sair do formulário da obra. Não é um <form> (já estamos dentro de um): Enter cria a editora, não salva a obra.
+ */
+function NewPublisher({ onCreated }: { onCreated: (publisher: NameItem) => void }) {
+  const queryClient = useQueryClient()
+  const [name, setName] = useState('')
+  const create = useMutation({
+    mutationFn: () => api<NameItem>('/publishers', { method: 'POST', body: { name: name.trim() } }),
+    onSuccess: (publisher) => {
+      setName('')
+      void queryClient.invalidateQueries({ queryKey: ['publishers'] })
+      onCreated(publisher)
+    },
+  })
+  const submit = () => name.trim() && create.mutate()
+
+  return (
+    <div className="space-y-2">
+      <ErrorAlert error={create.error} />
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Field label="Nova editora" hint="Não está na lista? Digite o nome e cadastre.">
+            {(p) => (
+              <input
+                {...p}
+                maxLength={150}
+                className={inputClass}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    submit()
+                  }
+                }}
+              />
+            )}
+          </Field>
+        </div>
+        <Button variant="secondary" loading={create.isPending} disabled={!name.trim()} onClick={submit}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Cadastrar editora
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 /** Com `book`, edita os dados da obra; os exemplares têm operações próprias na página da obra. */
 export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (book: Book) => void; onCancel: () => void }) {
   const queryClient = useQueryClient()
   const [serverError, setServerError] = useState<unknown>(null)
+  // Capa: enviada depois de salvar a obra. Se o envio falhar, a obra já existe; `created` evita cadastrá-la de novo ao tentar outra vez.
+  const [cover, setCover] = useState<File | null>(null)
+  const [coverError, setCoverError] = useState<string | null>(null)
+  const [removeCover, setRemoveCover] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
+  const created = useRef<Book | null>(null)
+
+  useEffect(() => {
+    if (!cover) return setPreview(null)
+    const url = URL.createObjectURL(cover)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [cover])
+
+  function pickCover(file: File | undefined) {
+    setCoverError(null)
+    if (file && !COVER_TYPES.includes(file.type)) {
+      setCover(null)
+      return setCoverError('Use uma imagem JPEG ou PNG.')
+    }
+    if (file && file.size > COVER_MAX_BYTES) {
+      setCover(null)
+      return setCoverError('A imagem passa de 2 MB.')
+    }
+    setCover(file ?? null)
+  }
 
   const authors = useQuery({ queryKey: ['authors'], queryFn: () => api<NameItem[]>('/authors') })
   const publishers = useQuery({ queryKey: ['publishers'], queryFn: () => api<NameItem[]>('/publishers') })
@@ -23,6 +101,7 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
   const {
     register,
     control,
+    setValue,
     handleSubmit,
     formState: { errors },
   } = useForm<BookFormValues>({
@@ -50,17 +129,38 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'copies' })
 
+  // A editora recém-cadastrada só vira opção do <select> depois que a lista é recarregada; aí ela é escolhida.
+  const [newPublisherId, setNewPublisherId] = useState<number | null>(null)
+  useEffect(() => {
+    if (newPublisherId !== null && publishers.data?.some((pub) => pub.id === newPublisherId)) {
+      setValue('publisherId', String(newPublisherId))
+      setNewPublisherId(null)
+    }
+  }, [newPublisherId, publishers.data, setValue])
+
   const save = useMutation({
-    mutationFn: (values: BookFormValues) =>
-      book
-        ? api<Book>(`/books/${book.id}`, { method: 'PUT', body: { ...toBookRequest(values), copies: undefined } })
-        : api<Book>('/books', { method: 'POST', body: toBookRequest(values) }),
+    mutationFn: async (values: BookFormValues) => {
+      let saved = book
+        ? await api<Book>(`/books/${book.id}`, { method: 'PUT', body: { ...toBookRequest(values), copies: undefined } })
+        : (created.current ??= await api<Book>('/books', { method: 'POST', body: toBookRequest(values) }))
+      if (cover) {
+        const data = new FormData()
+        data.append('file', cover)
+        saved = await api<Book>(`/books/${saved.id}/cover`, { method: 'PUT', body: data })
+      } else if (removeCover && saved.coverVersion != null) {
+        saved = await api<Book>(`/books/${saved.id}/cover`, { method: 'DELETE' })
+      }
+      return saved
+    },
     onSuccess: (saved) => {
       void queryClient.invalidateQueries({ queryKey: ['books'] })
       void queryClient.invalidateQueries({ queryKey: ['book', saved.id] })
       onSaved(saved)
     },
-    onError: setServerError,
+    onError: (e) => {
+      setServerError(e)
+      if (created.current) void queryClient.invalidateQueries({ queryKey: ['books'] })   // a obra já entrou no acervo
+    },
   })
 
   const toOptions = (items?: NameItem[]) => (items ?? []).map((i) => ({ value: String(i.id), label: i.name }))
@@ -108,6 +208,8 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
         )}
       </Field>
 
+      <NewPublisher onCreated={(pub) => setNewPublisherId(pub.id)} />
+
       <Controller
         control={control}
         name="authorIds"
@@ -126,7 +228,25 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
       <Field label="Descrição" error={errors.description?.message}>
         {(p) => <textarea {...p} rows={3} className={inputClass} {...register('description')} />}
       </Field>
-      <Field label="Endereço da imagem da capa" hint="Opcional. Envio de arquivo ainda não existe." error={errors.coverUrl?.message}>
+      <div className="flex items-start gap-4">
+        {preview ? (
+          <img src={preview} alt="Prévia da capa escolhida" className="h-24 w-16 shrink-0 rounded border border-slate-200 object-cover" />
+        ) : (
+          book && !removeCover && <BookCover book={book} size="thumb" />
+        )}
+        <div className="flex-1 space-y-2">
+          <Field label="Capa da obra" hint="Opcional. JPEG ou PNG, até 2 MB. O sistema gera a miniatura." error={coverError ?? undefined}>
+            {(p) => <input {...p} type="file" accept={COVER_TYPES.join(',')} onChange={(e) => pickCover(e.target.files?.[0])} className={inputClass} />}
+          </Field>
+          {book?.coverVersion != null && !cover && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={removeCover} onChange={(e) => setRemoveCover(e.target.checked)} />
+              Remover a capa enviada
+            </label>
+          )}
+        </div>
+      </div>
+      <Field label="Endereço da imagem da capa" hint="Opcional. Só é usado quando não há capa enviada." error={errors.coverUrl?.message}>
         {(p) => <input {...p} type="url" className={inputClass} {...register('coverUrl')} />}
       </Field>
 
@@ -181,6 +301,9 @@ export function BookForm({ book, onSaved, onCancel }: { book?: Book; onSaved: (b
       )}
 
       <ErrorAlert error={serverError} />
+      {Boolean(serverError) && created.current && (
+        <Alert tone="amber">A obra foi cadastrada, mas a capa não foi enviada. Escolha outra imagem e salve de novo, ou cancele e envie depois pela edição.</Alert>
+      )}
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onCancel}>
           Cancelar

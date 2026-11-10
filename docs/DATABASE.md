@@ -3,7 +3,7 @@
 PostgreSQL 16, esquema só por Flyway (`backend/src/main/resources/db/migration`). Dinheiro em reais (`numeric(10,2)`); datas `timestamptz`.
 
 Tabelas (V1): roles, permissions, role_permissions, users, user_roles, authors, publishers, categories, books,
-book_authors, book_categories, book_copies, loans, loan_renewals, reservations, fine_rates, fines, payments, notifications, audit_logs.
+book_authors, book_categories, book_copies, loans, loan_renewals, reservations, fine_rates, fines, payments, notifications, audit_logs, book_covers (capa enviada, V11).
 
 Pontos de atenção:
 - `book_copies.kind`: `CONSULTA` | `CIRCULANTE`. `loans` referencia `(copy_id, copy_kind)` com `copy_kind = 'CIRCULANTE'`.
@@ -17,4 +17,4 @@ Pontos de atenção:
 - V4 prazo e renovação em `loan_limits` (`loan_days`, `max_renewals`, `renewal_days`; padrões 14, 2, 7).
 - V5 `reservations.copy_id` (exemplar guardado) + índice único, `loan_limits.reservation_pickup_days` (padrão 3) e multa de funcionário em `fine_rates` (R$ 1,00/dia, assumido).
 - V6 `notifications.attempts`, `last_error` e `dedup_key` (UNIQUE) para controle de entrega e aviso único.
-- V7 índice parcial de falhas de login (bloqueio por força bruta). V8 índices de desempenho (períodos, ativos por vencimento, renovações, reservas por leitor). V9 sessão e senha temporária (`users.token_version`, `must_change_password`), busca sem acento (`pg_trgm`, `unaccent`, função `f_unaccent`, índices GIN em título, autor, nome, e-mail e matrícula) e índices de ordenação e de chaves estrangeiras.
+- V7 índice parcial de falhas de login (bloqueio por força bruta). V8 índices de desempenho (períodos, ativos por vencimento, renovações, reservas por leitor). V9 sessão e senha temporária (`users.token_version`, `must_change_password`), busca sem acento (`pg_trgm`, `unaccent`, função `f_unaccent`, índices GIN em título, autor, nome, e-mail e matrícula) e índices de ordenação e de chaves estrangeiras. V11 capa da obra (`books.cover_version`, tabela `book_covers` com a imagem e a miniatura).

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { BookCover } from '../components/BookCover'
 import { BookForm } from '../components/BookForm'
 import type { Book, Copy, CopyStatus, Reservation } from '../lib/types'
 import {
@@ -182,14 +183,7 @@ export function BookDetailPage() {
       <div className="space-y-6">
         <Card title="Dados da obra">
           <div className="flex flex-col gap-4 sm:flex-row">
-            {book.coverUrl && (
-              <img
-                src={book.coverUrl}
-                alt={`Capa de ${book.title}`}
-                referrerPolicy="no-referrer"
-                className="h-48 w-32 rounded object-cover"
-              />
-            )}
+            <BookCover book={book} size="full" />
             <dl className="grid flex-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-slate-500">ISBN</dt>

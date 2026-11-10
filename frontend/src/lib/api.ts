@@ -80,7 +80,8 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-  if (options.body !== undefined) {
+  const isForm = options.body instanceof FormData   // upload: o navegador define o Content-Type com o limite do corpo
+  if (options.body !== undefined && !isForm) {
     headers['Content-Type'] = 'application/json'
   }
 
@@ -89,7 +90,7 @@ async function send(path: string, options: RequestOptions): Promise<Response> {
     res = await fetch(buildUrl(path, options.params), {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.body === undefined ? undefined : isForm ? (options.body as FormData) : JSON.stringify(options.body),
     })
   } catch {
     throw new ApiError(0, 'Não foi possível falar com o servidor. Verifique sua conexão.')

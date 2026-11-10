@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/forgot", "/api/v1/auth/reset", "/api/v1/privacy", "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/books/*/cover").permitAll()   // <img> não envia token
                         // Por URL (antes da validação do corpo): consulta ao acervo é de todos; o resto, da equipe.
                         // Os @PreAuthorize nos controllers continuam como segunda barreira.
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**", "/api/v1/authors",
