@@ -55,6 +55,12 @@ test.describe('acessibilidade (axe) — equipe', () => {
     await audit(page, info, 'acervo-nova-obra-dialogo')
     await page.keyboard.press('Escape')
 
+    await page.getByRole('link', { name: 'Importar por ISBN' }).click()
+    await expect(page.getByRole('heading', { name: 'Importar obras por ISBN' })).toBeVisible()
+    await audit(page, info, 'acervo-importar')
+    await page.getByRole('link', { name: 'Voltar ao acervo' }).click()
+    await expect(page.getByRole('table', { name: 'Obras do acervo' })).toBeVisible()
+
     await page.getByLabel('Buscar por título').fill(book.title)
     await page.getByRole('button', { name: 'Buscar' }).click()
     await page.getByRole('link', { name: book.title }).click()

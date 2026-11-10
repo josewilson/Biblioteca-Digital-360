@@ -55,10 +55,15 @@ export function BooksPage() {
         subtitle="Consulte as obras e a disponibilidade dos exemplares."
         actions={
           isStaff && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Nova obra
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link to="/acervo/importar" className="text-sm font-medium text-brand-700 underline">
+                Importar por ISBN
+              </Link>
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Nova obra
+              </Button>
+            </div>
           )
         }
       />
