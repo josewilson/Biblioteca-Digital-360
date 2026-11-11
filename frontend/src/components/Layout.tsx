@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router'
 import {
   BookOpen,
+  Boxes,
   ChartColumn,
   Handshake,
   KeyRound,
@@ -33,6 +34,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: '/painel', label: 'Painel', icon: LayoutDashboard, staffOnly: true },
   { to: '/acervo', label: 'Acervo', icon: BookOpen },
+  { to: '/exemplares', label: 'Exemplares', icon: Boxes, staffOnly: true },
   { to: '/balcao', label: 'Balcão', icon: Handshake, staffOnly: true },
   { to: '/reservas', label: 'Reservas', icon: Bookmark, staffOnly: true },
   { to: '/multas', label: 'Multas', icon: Receipt, staffOnly: true },

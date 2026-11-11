@@ -61,6 +61,11 @@ test.describe('acessibilidade (axe) — equipe', () => {
     await page.getByRole('link', { name: 'Voltar ao acervo' }).click()
     await expect(page.getByRole('table', { name: 'Obras do acervo' })).toBeVisible()
 
+    await page.goto('/exemplares')
+    await expect(page.getByRole('table', { name: 'Exemplares do acervo' })).toBeVisible()
+    await audit(page, info, 'exemplares')
+    await page.goto('/acervo')
+
     await page.getByLabel('Buscar por título').fill(book.title)
     await page.getByRole('button', { name: 'Buscar' }).click()
     await page.getByRole('link', { name: book.title }).click()

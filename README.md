@@ -15,7 +15,7 @@ Acervo · Usuários · Empréstimos · Reservas · Renovações · Multas · Pag
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-183%20backend%20%C2%B7%20109%20frontend%20%C2%B7%2033%20E2E-2ea44f)
+![Testes](https://img.shields.io/badge/testes-187%20backend%20%C2%B7%20113%20frontend%20%C2%B7%2033%20E2E-2ea44f)
 ![Acessibilidade](https://img.shields.io/badge/acessibilidade-axe%20no%20CI-5a2d82)
 
 </div>
@@ -255,8 +255,8 @@ Pré-requisitos: JDK 21, Docker e Node 20.19+ (testado com 24). Variáveis, e-ma
 
 ## Testes e qualidade
 ```bash
-cd backend && ./mvnw verify                                 # backend: 183 testes (com PostgreSQL real via Testcontainers)
-cd frontend && npm test                         # frontend: 109 testes
+cd backend && ./mvnw verify                                 # backend: 187 testes (com PostgreSQL real via Testcontainers)
+cd frontend && npm test                         # frontend: 113 testes
 cd frontend && npm run e2e:up && npm run e2e && npm run e2e:down   # 33 testes de ponta a ponta + axe
 ```
 O CI roda três jobs: **backend**, **frontend** (tipos, testes, build e `npm audit`) e **ponta a ponta** (pilha completa em

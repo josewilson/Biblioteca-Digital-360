@@ -27,6 +27,7 @@ Perfis "equipe": SUPER_ADMIN, ADMIN_INSTITUTION, LIBRARIAN, ASSISTANT.
 | `GET /books?q=&page=&size=` | autenticado | busca paginada: trecho do título ou autor (sem acento), ISBN ou código de exemplar exatos |
 | `PUT /books/{id}` | equipe | edita os dados da obra (exemplares não mudam aqui) |
 | `GET /books/{id}` | autenticado | obra com autores, categorias e exemplares |
+| `GET /copies?q=&status=&kind=&condition=&categoryId=&page=&size=` | equipe | lista paginada de exemplares (um por linha, ordenados por título e código) com título, ISBN, editora, autores e categorias da obra; `q` casa com título, autor, editora, categoria, ISBN (sem hífen), código e localização, sem acento e em trecho; os filtros se combinam; filtro inválido responde 400 |
 | `POST /books/{id}/copies` | equipe | acrescenta exemplar |
 | `PUT /copies/{id}` | equipe | edita código, estado e localização (o tipo não muda) |
 | `PATCH /copies/{id}/status` | equipe | `DISPONIVEL`, `PERDIDO` ou `BAIXADO`. Recusa baixa do único exemplar de consulta ativo |
