@@ -1,0 +1,73 @@
+# Blueprint do Render (plano gratuito): banco + backend + site estático. Passo a passo em docs/DEPLOYMENT.md ("Render").
+# O site estático repassa /api ao backend (rewrite), então o navegador fala com um endereço só: sem CORS.
+databases:
+  - name: biblioteca-db
+    databaseName: biblioteca
+    user: biblioteca
+    plan: free
+
+services:
+  - type: web
+    name: biblioteca-api          # o endereço vira https://biblioteca-api.onrender.com; se o nome já existir, ajuste os rewrites abaixo
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase: { name: biblioteca-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: biblioteca-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: biblioteca-db, property: database }
+      - key: DB_USER
+        fromDatabase: { name: biblioteca-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: biblioteca-db, property: password }
+      - key: JWT_SECRET
+        generateValue: true
+      # 512 MB de memória: heap menor e coletor simples para sobrar espaço ao resto da JVM.
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k
+      - key: ADMIN_EMAIL            # só para criar o 1º administrador; apague depois do primeiro acesso
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: APP_PUBLIC_URL         # endereço do SITE (https://biblioteca-web.onrender.com), usado nos links dos e-mails
+        sync: false
+      - key: PRIVACY_CONTACT
+        sync: false
+      # E-mail: troque para smtp e preencha os demais (Brevo, porta 2525; as portas 25/465/587 são bloqueadas no plano gratuito).
+      - key: APP_NOTIFICATIONS_CHANNEL
+        value: log
+      - key: APP_NOTIFICATIONS_FROM
+        sync: false
+      - key: SPRING_MAIL_HOST
+        sync: false
+      - key: SPRING_MAIL_PORT
+        value: "2525"
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+
+  - type: web
+    name: biblioteca-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - { type: rewrite, source: /api/*, destination: https://biblioteca-api.onrender.com/api/* }
+      - { type: rewrite, source: /healthz, destination: https://biblioteca-api.onrender.com/actuator/health }
+      - { type: rewrite, source: /*, destination: /index.html }   # rotas do React Router (deve ser a última)
+    # Os mesmos cabeçalhos do nginx (frontend/nginx/security-headers.conf).
+    headers:
+      - { path: /*, name: X-Content-Type-Options, value: nosniff }
+      - { path: /*, name: X-Frame-Options, value: DENY }
+      - { path: /*, name: Referrer-Policy, value: no-referrer }
+      - { path: /*, name: Permissions-Policy, value: "camera=(), microphone=(), geolocation=()" }
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: http: data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
