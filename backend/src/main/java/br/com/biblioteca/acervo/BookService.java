@@ -144,6 +144,17 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
+    public Page<CopyListItem> searchCopies(String query, CopyStatus status, CopyKind kind, CopyCondition condition,
+                                           Long categoryId, Pageable pageable) {
+        String text = query == null ? "" : query.trim();
+        String pattern = text.isEmpty() ? "%" : SearchText.contains(text);
+        String isbnPattern = text.isEmpty() ? "%" : SearchText.contains(text.replaceAll("[\\s-]", ""));
+        // a ordenação é fixa na consulta (título, código): ignora o sort que o cliente mandar
+        Pageable fixed = org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return copies.search(pattern, isbnPattern, status, kind, condition, categoryId, fixed).map(CopyListItem::from);
+    }
+
+    @Transactional(readOnly = true)
     public BookResponse get(Long id) {
         return BookResponse.from(findBook(id));
     }

@@ -72,6 +72,16 @@ public class BookController {
         return service.get(id);
     }
 
+    @GetMapping("/copies")
+    @PreAuthorize(Access.STAFF)
+    public Page<CopyListItem> searchCopies(@RequestParam(required = false) String q,
+                                           @RequestParam(required = false) CopyStatus status,
+                                           @RequestParam(required = false) CopyKind kind,
+                                           @RequestParam(required = false) CopyCondition condition,
+                                           @RequestParam(required = false) Long categoryId, Pageable pageable) {
+        return service.searchCopies(q, status, kind, condition, categoryId, pageable);
+    }
+
     @PostMapping("/books/{id}/copies")
     @PreAuthorize(Access.STAFF)
     public ResponseEntity<CopyResponse> addCopy(@PathVariable Long id, @Valid @RequestBody CopyRequest request,

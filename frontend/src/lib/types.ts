@@ -212,3 +212,13 @@ export interface IsbnSuggestion {
   categories: SuggestedName[]
   sources: Record<string, string>
 }
+
+/** Linha de `GET /copies`: o exemplar e o essencial da obra. */
+export interface CopyListItem extends Copy {
+  bookId: number
+  title: string
+  isbn: string | null
+  publisher: string | null
+  authors: string[]
+  categories: string[]
+}

@@ -12,6 +12,7 @@ import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { PoliciesPage } from './pages/PoliciesPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { BooksPage } from './pages/BooksPage'
+import { CopiesPage } from './pages/CopiesPage'
 import { ImportBooksPage } from './pages/ImportBooksPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CounterPage } from './pages/CounterPage'
@@ -57,6 +58,7 @@ export const routes: RouteObject[] = [
           { path: 'painel', element: staff(<Suspense fallback={<Loading />}><DashboardPage /></Suspense>) },
           { path: 'acervo', element: <BooksPage /> },
           { path: 'acervo/importar', element: staff(<ImportBooksPage />) },
+          { path: 'exemplares', element: staff(<CopiesPage />) },
           { path: 'acervo/:id', element: <BookDetailPage /> },
           { path: 'balcao', element: staff(<CounterPage />) },
           { path: 'reservas', element: staff(<ReservationsPage />) },
