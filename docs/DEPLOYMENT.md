@@ -19,6 +19,20 @@ Só o nginx fica exposto; o backend (porta 8080) e o banco não são alcançáve
 O backend recusa subir se `JWT_SECRET` tiver menos de 32 caracteres. `DB_PASSWORD` é exigido pelo compose.
 `DB_PASSWORD` não tem valor padrão em lugar nenhum: o compose e o `application.yml` exigem que você a defina.
 
+## Render (plano gratuito, sem Docker Compose)
+O `render.yaml` na raiz cria três serviços: banco Postgres, backend (Docker, `backend/Dockerfile`) e site estático (`frontend`, com rewrite de `/api` para o backend). HTTPS e domínio `onrender.com` vêm do Render; nginx, Caddy e o serviço de backup do compose **não são usados**.
+1. No Render: **New → Blueprint**, escolha este repositório. Preencha os segredos pedidos: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `APP_PUBLIC_URL` (o endereço do site, `https://biblioteca-web.onrender.com`), `PRIVACY_CONTACT` e, se for enviar e-mail, as variáveis de SMTP (veja "E-mail"; no Render gratuito use a porta 2525). `JWT_SECRET` é gerado pelo Render.
+2. Se `biblioteca-api` já estiver em uso, o Render dá outro endereço ao backend: ajuste os dois `destination` do site em `render.yaml`.
+3. Primeiro deploy: o backend leva alguns minutos. Entre no site, troque a senha do administrador e **apague `ADMIN_EMAIL` e `ADMIN_PASSWORD`** das variáveis.
+4. Monitor externo (UptimeRobot) em `https://SEU-SITE/healthz` mantém o backend acordado.
+
+Limites do plano gratuito e o que **não foi testado** (nenhum deploy real foi feito):
+- O backend dorme sem acesso e o primeiro pedido depois disso demora (a JVM sobe do zero).
+- O Postgres gratuito expira em cerca de 30 dias: serve para demonstração, não para dados reais. Sem o serviço `backup` do compose; para uso real, plano pago de banco (com backup do Render).
+- A memória é de 512 MB: `JAVA_TOOL_OPTIONS` no `render.yaml` reduz o heap, e o valor é um palpite. Se o backend for morto por falta de memória, reduza `MaxRAMPercentage` ou use um plano pago.
+- O limite de login por IP vivia no nginx e **não existe** no site estático; sobra o bloqueio por e-mail do backend. O IP gravado na auditoria é o do proxy do Render, não o do cliente.
+- Não conferido ainda: o rewrite de `/api` pelo site estático e a criação das extensões `pg_trgm`/`unaccent` (V9) no banco do Render.
+
 ## HTTPS (obrigatório fora da sua máquina)
 Sem HTTPS, senha e token trafegam em texto puro. O arquivo `docker-compose.tls.yml` põe um **Caddy** na frente do site: ele pede e renova o certificado (Let's Encrypt) sozinho e envia HSTS.
 1. O domínio precisa apontar para o servidor e as portas 80 e 443 estar abertas.
@@ -38,6 +52,7 @@ SPRING_MAIL_PORT=587          # 587 + STARTTLS (padrão); para a 465 use também
 SPRING_MAIL_USERNAME=...
 SPRING_MAIL_PASSWORD=...
 ```
+**Provedor gratuito para começar (Brevo, 300 e-mails por dia):** crie a conta, valide o remetente em "Senders" e gere uma chave SMTP em "SMTP & API". No `.env`: `SPRING_MAIL_HOST=smtp-relay.brevo.com`, `SPRING_MAIL_PORT=2525` (STARTTLS, o padrão), `SPRING_MAIL_USERNAME` = o login SMTP que a Brevo mostra, `SPRING_MAIL_PASSWORD` = a chave SMTP, `APP_NOTIFICATIONS_FROM` = o remetente validado. **No Render gratuito use a porta 2525:** as portas 25, 465 e 587 são bloqueadas nos serviços gratuitos ([aviso do Render](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports)). Sem mudança de código; a Brevo aceitar a 2525 é do provedor e **precisa ser conferida com o teste abaixo**.
 Servidor local sem senha (teste): `MAIL_SMTP_AUTH=false` e `MAIL_SMTP_STARTTLS=false`. O backend **recusa subir** com o canal `smtp` sem host, remetente ou (com autenticação ligada) usuário, para o erro aparecer na hora e não aviso a aviso. Conexão e leitura têm tempo limite (5 s e 10 s): provedor fora do ar não trava o sistema, e depois de 3 falhas seguidas a rodada de envio para e retoma no minuto seguinte.
 **Confira com o provedor de verdade**, logado como administrador: `POST /api/v1/notifications/test` manda um e-mail de teste para o seu endereço e devolve o canal ligado (`log` não envia nada) ou o motivo do erro. O caminho de envio é testado contra um servidor SMTP de verdade (Mailpit em container, `SmtpChannelTest`: conexão, acentos, falha com servidor fora do ar). **Não testado com o seu provedor** (TLS, autenticação, limites de envio, remetente aprovado): antes de abrir, mande um aviso real a si mesmo. Se o provedor recusar, o aviso fica pendente e é tentado de novo (até 5 vezes, `notifications.last_error` mostra o motivo).
 

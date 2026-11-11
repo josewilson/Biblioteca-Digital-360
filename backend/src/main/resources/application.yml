@@ -6,7 +6,8 @@ spring:
       max-file-size: 2MB      # capa da obra
       max-request-size: 3MB
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5433/biblioteca}
+    # DB_URL completo, ou host/porta/nome em variáveis separadas (é como o Render entrega a conexão)
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:biblioteca}}
     username: ${DB_USER:biblioteca}
     password: ${DB_PASSWORD}   # sem valor padrão: defina DB_PASSWORD no ambiente (a aplicação não sobe sem ela)
   jpa:
