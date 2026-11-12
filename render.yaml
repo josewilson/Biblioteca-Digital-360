@@ -36,7 +36,7 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
-      - key: APP_PUBLIC_URL         # endereço do SITE (https://biblioteca-web.onrender.com), usado nos links dos e-mails
+      - key: APP_PUBLIC_URL         # endereço do SITE (com o sufixo do Render, ex.: https://biblioteca-web-bcyz.onrender.com), usado nos links dos e-mails
         sync: false
       - key: PRIVACY_CONTACT
         sync: false

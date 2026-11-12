@@ -21,17 +21,17 @@ O backend recusa subir se `JWT_SECRET` tiver menos de 32 caracteres. `DB_PASSWOR
 
 ## Render (plano gratuito, sem Docker Compose)
 O `render.yaml` na raiz cria três serviços: banco Postgres, backend (Docker, `backend/Dockerfile`) e site estático (`frontend`, com rewrite de `/api` para o backend). HTTPS e domínio `onrender.com` vêm do Render; nginx, Caddy e o serviço de backup do compose **não são usados**.
-1. No Render: **New → Blueprint**, escolha este repositório. Preencha os segredos pedidos: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `APP_PUBLIC_URL` (o endereço do site, `https://biblioteca-web.onrender.com`), `PRIVACY_CONTACT` e, se for enviar e-mail, as variáveis de SMTP (veja "E-mail"; no Render gratuito use a porta 2525). `JWT_SECRET` é gerado pelo Render.
+1. No Render: **New → Blueprint**, escolha este repositório. Preencha os segredos pedidos: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `APP_PUBLIC_URL` (o endereço do site, com o sufixo que o Render acrescenta: no primeiro deploy, `https://biblioteca-web-bcyz.onrender.com`), `PRIVACY_CONTACT` e, se for enviar e-mail, as variáveis de SMTP (veja "E-mail"; no Render gratuito use a porta 2525). `JWT_SECRET` é gerado pelo Render.
 2. O Render acrescenta um sufixo ao nome do backend (no primeiro deploy: `https://biblioteca-api-86q3.onrender.com`). Se o seu endereço for outro, ajuste os dois `destination` do site em `render.yaml`. O backend leva uns 3 a 4 minutos para subir (de novo a cada despertar do plano gratuito).
 3. Primeiro deploy: o backend leva alguns minutos. Entre no site, troque a senha do administrador e **apague `ADMIN_EMAIL` e `ADMIN_PASSWORD`** das variáveis.
 4. Monitor externo (UptimeRobot) em `https://SEU-SITE/healthz` mantém o backend acordado.
 
-Limites do plano gratuito e o que **não foi testado** (nenhum deploy real foi feito):
+Limites do plano gratuito e o que foi (ou não) testado. **Deploy real feito em 11/11/2026** (site `https://biblioteca-web-bcyz.onrender.com`, API `https://biblioteca-api-86q3.onrender.com`). **Conferido em 12/11/2026, sem login:** o rewrite de `/api` pelo site chega ao backend (`/healthz` devolve `UP`; login errado dá 401; `/api/v1/openapi` sem token dá 401), as rotas do React (`/acervo`, `/privacidade`) respondem 200 e os cabeçalhos de segurança (CSP, `X-Frame-Options`, `nosniff`) saem no site. O backend sobe e passa no health check, o que indica que a V9 rodou. Se o rewrite der 404, o `destination` em `render.yaml` não bate com o endereço real da API (foi o que aconteceu antes do commit `97b16f7`).
 - O backend dorme sem acesso e o primeiro pedido depois disso demora (a JVM sobe do zero).
 - O Postgres gratuito expira em cerca de 30 dias: serve para demonstração, não para dados reais. Sem o serviço `backup` do compose; para uso real, plano pago de banco (com backup do Render).
 - A memória é de 512 MB: `JAVA_TOOL_OPTIONS` no `render.yaml` reduz o heap, e o valor é um palpite. Se o backend for morto por falta de memória, reduza `MaxRAMPercentage` ou use um plano pago.
 - O limite de login por IP vivia no nginx e **não existe** no site estático; sobra o bloqueio por e-mail do backend. O IP gravado na auditoria é o do proxy do Render, não o do cliente.
-- Não conferido ainda: o rewrite de `/api` pelo site estático e a criação das extensões `pg_trgm`/`unaccent` (V9) no banco do Render.
+- **Não conferido ainda:** login como administrador pelo site, busca sem acento no acervo (prova de que as extensões `pg_trgm`/`unaccent` e os índices da V9 funcionam no Postgres do Render), `APP_PUBLIC_URL` com o endereço real, envio de e-mail e o monitor externo.
 
 ## HTTPS (obrigatório fora da sua máquina)
 Sem HTTPS, senha e token trafegam em texto puro. O arquivo `docker-compose.tls.yml` põe um **Caddy** na frente do site: ele pede e renova o certificado (Let's Encrypt) sozinho e envia HSTS.
