@@ -22,7 +22,7 @@ O backend recusa subir se `JWT_SECRET` tiver menos de 32 caracteres. `DB_PASSWOR
 ## Render (plano gratuito, sem Docker Compose)
 O `render.yaml` na raiz cria três serviços: banco Postgres, backend (Docker, `backend/Dockerfile`) e site estático (`frontend`, com rewrite de `/api` para o backend). HTTPS e domínio `onrender.com` vêm do Render; nginx, Caddy e o serviço de backup do compose **não são usados**.
 1. No Render: **New → Blueprint**, escolha este repositório. Preencha os segredos pedidos: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `APP_PUBLIC_URL` (o endereço do site, `https://biblioteca-web.onrender.com`), `PRIVACY_CONTACT` e, se for enviar e-mail, as variáveis de SMTP (veja "E-mail"; no Render gratuito use a porta 2525). `JWT_SECRET` é gerado pelo Render.
-2. Se `biblioteca-api` já estiver em uso, o Render dá outro endereço ao backend: ajuste os dois `destination` do site em `render.yaml`.
+2. O Render acrescenta um sufixo ao nome do backend (no primeiro deploy: `https://biblioteca-api-86q3.onrender.com`). Se o seu endereço for outro, ajuste os dois `destination` do site em `render.yaml`. O backend leva uns 3 a 4 minutos para subir (de novo a cada despertar do plano gratuito).
 3. Primeiro deploy: o backend leva alguns minutos. Entre no site, troque a senha do administrador e **apague `ADMIN_EMAIL` e `ADMIN_PASSWORD`** das variáveis.
 4. Monitor externo (UptimeRobot) em `https://SEU-SITE/healthz` mantém o backend acordado.
 

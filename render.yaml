@@ -8,13 +8,15 @@ databases:
 
 services:
   - type: web
-    name: biblioteca-api          # o endereço vira https://biblioteca-api.onrender.com; se o nome já existir, ajuste os rewrites abaixo
+    name: biblioteca-api          # o Render acrescenta um sufixo ao nome (aqui, https://biblioteca-api-86q3.onrender.com); se o nome já existir, ajuste os rewrites abaixo
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
     healthCheckPath: /actuator/health
     envVars:
+      - key: PORT                 # o Render procura a porta 10000 por padrão; sem isto ele detecta a 8080 e reinicia o deploy (a JVM sobe duas vezes)
+        value: "8080"
       - key: DB_HOST
         fromDatabase: { name: biblioteca-db, property: host }
       - key: DB_PORT
@@ -59,8 +61,8 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     routes:
-      - { type: rewrite, source: /api/*, destination: https://biblioteca-api.onrender.com/api/* }
-      - { type: rewrite, source: /healthz, destination: https://biblioteca-api.onrender.com/actuator/health }
+      - { type: rewrite, source: /api/*, destination: https://biblioteca-api-86q3.onrender.com/api/* }
+      - { type: rewrite, source: /healthz, destination: https://biblioteca-api-86q3.onrender.com/actuator/health }
       - { type: rewrite, source: /*, destination: /index.html }   # rotas do React Router (deve ser a última)
     # Os mesmos cabeçalhos do nginx (frontend/nginx/security-headers.conf).
     headers:
